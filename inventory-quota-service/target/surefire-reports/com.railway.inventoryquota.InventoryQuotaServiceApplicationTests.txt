@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.railway.inventoryquota.InventoryQuotaServiceApplicationTests
+-------------------------------------------------------------------------------
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 17.94 s -- in com.railway.inventoryquota.InventoryQuotaServiceApplicationTests
