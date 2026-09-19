@@ -1,36 +1,56 @@
-package com.railway.reservation.dto;
 
-import java.time.Instant;
+package com.railway.payment.dto;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 public class ErrorResponse {
-    private long timestamp;
-    private int status;
-    private String error;
+
+    private boolean success = false;
     private String message;
-    private String path;
+    private List<String> errors;
+    private LocalDateTime timestamp;
 
     public ErrorResponse() {
-        this.timestamp = Instant.now().toEpochMilli();
+        this.timestamp = LocalDateTime.now();
     }
 
-    public ErrorResponse(int status, String error, String message, String path) {
-        this.timestamp = Instant.now().toEpochMilli();
-        this.status = status;
-        this.error = error;
+    public ErrorResponse(String message, List<String> errors) {
+        this.success = false;
         this.message = message;
-        this.path = path;
+        this.errors = errors;
+        this.timestamp = LocalDateTime.now();
     }
 
-    public long getTimestamp() { return timestamp; }
-    public int getStatus() { return status; }
-    public void setStatus(int status) { this.status = status; }
+    public boolean isSuccess() {
+        return success;
+    }
 
-    public String getError() { return error; }
-    public void setError(String error) { this.error = error; }
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
 
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
+    public String getMessage() {
+        return message;
+    }
 
-    public String getPath() { return path; }
-    public void setPath(String path) { this.path = path; }
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public List<String> getErrors() {
+        return errors;
+    }
+
+    public void setErrors(List<String> errors) {
+        this.errors = errors;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
 }
