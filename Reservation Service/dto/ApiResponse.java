@@ -1,4 +1,4 @@
-package com.railway.payment.dto;
+package com.railway.reservation.dto;
 
 public class ApiResponse<T> {
     private boolean success;
