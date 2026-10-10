@@ -1,0 +1,741 @@
+<div class="booking-page">
+  <div class="container">
+    <!-- Steps Breadcrumb -->
+    <div class="wizard-steps">
+      <div class="step-indicator" [class.active]="step === 1" [class.done]="step > 1">
+        <span class="step-circle">{{ step > 1 ? '✓' : '1' }}</span>
+        <span class="step-label">{{ 'booking.passengerDetails' | translate }}</span>
+      </div>
+      <div class="step-line" [class.done]="step > 1"></div>
+      <div class="step-indicator" [class.active]="step === 2" [class.done]="step > 2">
+        <span class="step-circle">{{ step > 2 ? '✓' : '2' }}</span>
+        <span class="step-label">{{ 'booking.selectSeatsStep' | translate }}</span>
+      </div>
+      <div class="step-line" [class.done]="step > 2"></div>
+      <div class="step-indicator" [class.active]="step === 3" [class.done]="step > 3">
+        <span class="step-circle">{{ step > 3 ? '✓' : '3' }}</span>
+        <span class="step-label">{{ 'booking.foodMenu' | translate }}</span>
+      </div>
+      <div class="step-line" [class.done]="step > 3"></div>
+      <div class="step-indicator" [class.active]="step === 4">
+        <span class="step-circle">4</span>
+        <span class="step-label">{{ 'booking.paymentMethod' | translate }}</span>
+      </div>
+    </div>
+
+    <div class="booking-layout">
+      <!-- Main Wizard Form Area -->
+      <div class="wizard-main">
+        <!-- STEP 1: PASSENGERS FORM -->
+        <div *ngIf="step === 1" class="wizard-card">
+          <div class="card-header-bar">
+            <div>
+              <h3>{{ 'booking.passengerDetails' | translate }}</h3>
+              <p>{{ 'booking.passengerHint' | translate }}</p>
+            </div>
+            <button
+              type="button"
+              class="btn btn-sm btn-primary"
+              (click)="addPassenger()"
+              [disabled]="passengersArray.length >= 6"
+            >
+              + {{ 'booking.addPassenger' | translate }} ({{ passengersArray.length }}/6)
+            </button>
+          </div>
+
+          <form [formGroup]="passengersForm">
+            <div formArrayName="passengers" class="passengers-stack">
+              <div
+                *ngFor="let p of passengersArray.controls; let i = index"
+                [formGroupName]="i"
+                class="passenger-card"
+              >
+                <div class="passenger-card-top">
+                  <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <span class="passenger-idx">{{ 'booking.passengerNum' | translate }} #{{ i + 1 }}</span>
+                    <span *ngIf="p.get('seatNumber')?.value" class="badge" style="font-size: 0.78rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 4px; background: rgba(30, 64, 175, 0.15); color: #1e40af; border: 1px solid rgba(30, 64, 175, 0.3);">
+                      💺 {{ 'seats.coach' | translate }} {{ p.get('coachNumber')?.value || activeCoach }} | {{ 'seats.seat' | translate }} {{ p.get('seatNumber')?.value }} ({{ p.get('seatPreference')?.value }})
+                    </span>
+                    <button
+                      *ngIf="p.get('seatNumber')?.value"
+                      type="button"
+                      class="btn btn-link btn-xs"
+                      style="font-size: 0.75rem; padding: 0; color: #0284c7; text-decoration: underline; cursor: pointer;"
+                      (click)="setActivePassenger(i); step = 2; loadSeatLayout()"
+                    >
+                      [Change Seat]
+                    </button>
+                  </div>
+                  <button
+                    *ngIf="passengersArray.length > 1"
+                    type="button"
+                    class="btn-remove-passenger"
+                    (click)="removePassenger(i)"
+                  >
+                    🗑️ {{ 'booking.removePassenger' | translate }}
+                  </button>
+                </div>
+
+                <div class="passenger-fields-grid">
+                  <!-- Name -->
+                  <div class="form-group span-2">
+                    <label class="form-label">{{ 'booking.passengerName' | translate }} *</label>
+                    <input
+                      type="text"
+                      formControlName="name"
+                      class="form-control"
+                      [placeholder]="'booking.cnicPlaceholder' | translate"
+                    />
+                  </div>
+
+                  <!-- Age -->
+                  <div class="form-group">
+                    <label class="form-label">{{ 'booking.passengerAge' | translate }} *</label>
+                    <input
+                      type="number"
+                      formControlName="age"
+                      class="form-control"
+                      placeholder="e.g. 28"
+                      min="1"
+                      max="120"
+                    />
+                  </div>
+
+                  <!-- Gender -->
+                  <div class="form-group">
+                    <label class="form-label">{{ 'booking.passengerGender' | translate }} *</label>
+                    <select formControlName="gender" class="form-control">
+                      <option value="MALE">{{ 'booking.male' | translate }}</option>
+                      <option value="FEMALE">{{ 'booking.female' | translate }}</option>
+                      <option value="OTHER">{{ 'booking.other' | translate }}</option>
+                    </select>
+                  </div>
+
+                  <!-- Seat Preference -->
+                  <div class="form-group">
+                    <label class="form-label">{{ 'booking.berthPref' | translate }}</label>
+                    <select formControlName="seatPreference" class="form-control">
+                      <option value="NO_PREFERENCE">{{ 'booking.noPref' | translate }}</option>
+                      <option value="LOWER">{{ 'seats.lowerBerth' | translate }}</option>
+                      <option value="MIDDLE">{{ 'seats.middleBerth' | translate }}</option>
+                      <option value="UPPER">{{ 'seats.upperBerth' | translate }}</option>
+                      <option value="SIDE_LOWER">{{ 'seats.sideLower' | translate }}</option>
+                      <option value="SIDE_UPPER">{{ 'seats.sideUpper' | translate }}</option>
+                    </select>
+                  </div>
+
+                  <!-- Concession -->
+                  <div class="form-group">
+                    <label class="form-label">{{ 'booking.concession' | translate }}</label>
+                    <select formControlName="concessionType" class="form-control" (change)="onConcessionTypeChange(i)">
+                      <option [ngValue]="null">{{ 'booking.none' | translate }}</option>
+                      <option value="SENIOR_CITIZEN">{{ 'booking.seniorCitizen' | translate }}</option>
+                      <option value="GOVERNMENT_STAFF">{{ 'booking.govtStaff' | translate }}</option>
+                      <option value="DISABILITY">{{ 'booking.disability' | translate }}</option>
+                      <option value="STUDENT">{{ 'booking.student' | translate }}</option>
+                    </select>
+                  </div>
+
+                  <!-- Ladies Quota Preference (Only for Female Passengers) -->
+                  <div class="form-group span-2 ladies-preference-box" *ngIf="p.get('gender')?.value === 'FEMALE'">
+                    <label class="form-label">
+                      <strong>👩 Ladies Quota Preference:</strong>
+                    </label>
+                    <div class="quota-radio-group">
+                      <label class="quota-radio-label" [class.selected]="p.get('ladiesQuotaPreference')?.value === true">
+                        <input
+                          type="radio"
+                          [value]="true"
+                          formControlName="ladiesQuotaPreference"
+                        />
+                        <span class="radio-text"><strong>Use Ladies Quota if eligible</strong> (Allocate from Women-only reserved quota if available)</span>
+                      </label>
+                      <label class="quota-radio-label" [class.selected]="p.get('ladiesQuotaPreference')?.value === false">
+                        <input
+                          type="radio"
+                          [value]="false"
+                          formControlName="ladiesQuotaPreference"
+                        />
+                        <span class="radio-text"><strong>Do Not Use Ladies Quota</strong> (Book strictly from General inventory / General WL)</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Concession ID Number & Live Verification -->
+                  <div class="form-group span-2" *ngIf="p.get('concessionType')?.value">
+                    <label class="form-label">{{ 'booking.concessionId' | translate }}</label>
+                    <div class="concession-input-group">
+                      <input
+                        type="text"
+                        formControlName="concessionNumber"
+                        class="form-control"
+                        [placeholder]="'booking.concessionPlaceholder' | translate"
+                        (blur)="verifyConcession(i)"
+                        [class.is-invalid]="concessionVerificationState[i]?.verified && !concessionVerificationState[i]?.eligible"
+                        [class.is-valid]="concessionVerificationState[i]?.verified && concessionVerificationState[i]?.eligible"
+                      />
+                      <button
+                        type="button"
+                        class="btn btn-outline-success verify-btn"
+                        [disabled]="concessionVerificationState[i]?.loading || !p.get('concessionNumber')?.value"
+                        (click)="verifyConcession(i)"
+                      >
+                        <span *ngIf="!concessionVerificationState[i]?.loading">{{ 'booking.verifyId' | translate }}</span>
+                        <span *ngIf="concessionVerificationState[i]?.loading" class="spinner-inline">{{ 'booking.verifying' | translate }}</span>
+                      </button>
+                    </div>
+
+                    <!-- Live Verification Status Messages -->
+                    <div *ngIf="concessionVerificationState[i]?.verified && concessionVerificationState[i]?.eligible" class="concession-status-box valid">
+                      <span>✓ {{ concessionVerificationState[i].message }} ({{ 'booking.fareReduced' | translate }})</span>
+                    </div>
+                    <div *ngIf="concessionVerificationState[i]?.verified && !concessionVerificationState[i]?.eligible" class="concession-status-box invalid">
+                      <span>{{ 'booking.invalidConcession' | translate }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add Another Passenger Button at bottom of Step 1 stack -->
+            <div class="add-another-pax-wrapper" *ngIf="passengersArray.length < 6" style="margin-top: 1rem; text-align: center;">
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                style="width: 100%; border-style: dashed; padding: 0.75rem; font-weight: 700; border-width: 2px;"
+                (click)="addPassenger()"
+              >
+                + {{ 'booking.addPassenger' | translate }} ({{ passengersArray.length }}/6)
+              </button>
+            </div>
+          </form>
+
+          <div class="wizard-footer" style="margin-top: 1.5rem;">
+            <button type="button" class="btn btn-secondary" (click)="goBack()">
+              {{ 'common.back' | translate }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="passengersForm.invalid"
+              (click)="goToStep2()"
+            >
+              {{ 'booking.continueSeatSelection' | translate }}
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 2: INTERACTIVE SEAT SELECTION & PASSENGER ASSIGNMENT -->
+        <div *ngIf="step === 2" class="wizard-card seat-selection-step">
+          <div class="card-header-bar">
+            <div>
+              <h3>{{ 'seats.title' | translate }}</h3>
+              <p>{{ 'booking.seatSelectionPrompt' | translate }}</p>
+            </div>
+            <div class="coach-meta-badge" *ngIf="trainCoaches && trainCoaches.length > 0">
+              <span class="badge badge-info">{{ 'seats.coach' | translate }}: {{ activeCoach }}</span>
+              <span class="badge badge-primary">{{ 'seats.travelCoach' | translate }}: {{ classType }}</span>
+            </div>
+          </div>
+
+          <!-- Empty State when no coaches configured for this train -->
+          <div *ngIf="!loadingCoaches && (!trainCoaches || trainCoaches.length === 0)" class="no-coaches-state">
+            <div class="no-coaches-icon">🚆</div>
+            <h4 class="no-coaches-title">{{ 'seats.noCoachesConfigured' | translate }}</h4>
+            <p class="no-coaches-desc">No coaches have been added by Admin for Train #{{ trainId }}.</p>
+          </div>
+
+          <!-- 1. Travel Coach Switcher at the Top -->
+          <div class="class-selector-box" *ngIf="trainCoaches && trainCoaches.length > 0">
+            <div class="selector-row-header">
+              <span class="selector-label">🚆 {{ 'seats.travelCoach' | translate }} ({{ 'seats.selectCoach' | translate }}):</span>
+              <span class="current-class-chip">{{ activeCoach }} ({{ classType }})</span>
+            </div>
+
+            <div class="coach-selection-controls">
+              <!-- Select Coach Dropdown -->
+              <div class="coach-dropdown-row">
+                <label for="coachSelectDropdown" class="coach-select-label">
+                  <strong>{{ 'seats.selectCoach' | translate }}</strong>
+                </label>
+                <select
+                  id="coachSelectDropdown"
+                  class="form-control coach-select-dropdown"
+                  [ngModel]="activeCoach"
+                  (ngModelChange)="onCoachDropdownChange($event)"
+                >
+                  <option *ngFor="let c of trainCoaches" [value]="c.coachNumber">
+                    {{ c.coachNumber }} ({{ c.classType }} · {{ c.totalSeats }} Seats)
+                  </option>
+                </select>
+              </div>
+
+              <!-- Coach Pill Buttons -->
+              <div class="class-pills">
+                <button
+                  *ngFor="let c of trainCoaches"
+                  type="button"
+                  class="class-pill-btn"
+                  [class.active]="activeCoach === c.coachNumber"
+                  (click)="selectCoachOption(c)"
+                >
+                  <span class="pill-code">{{ c.coachNumber }}</span>
+                  <span class="pill-name">{{ c.classType }} · {{ c.totalSeats }} Seats</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Coach Layout Toolbar with Live Counts -->
+          <div class="coach-toolbar" *ngIf="trainCoaches && trainCoaches.length > 0">
+            <div class="coach-tabs">
+              <span class="label">💺 Coach {{ activeCoach }} Layout:</span>
+            </div>
+            <div class="coach-stats-pill">
+              <span class="dot available"></span> {{ activeCoachStats.available }} {{ 'seats.seatAvailable' | translate }}
+              <span class="dot selected"></span> {{ activeCoachStats.selected }} {{ 'seats.seatSelected' | translate }}
+              <span class="dot booked"></span> {{ activeCoachStats.booked }} {{ 'seats.seatBooked' | translate }}
+            </div>
+          </div>
+
+          <!-- Alert for Male selecting Ladies seat -->
+          <div *ngIf="maleLadiesSeatWarning" class="alert-quota-warning">
+            <span class="alert-icon">⚠️</span>
+            <div class="alert-text">
+              <strong>{{ 'booking.ladiesSeatMaleError' | translate }}</strong>
+              <p>{{ maleLadiesSeatWarning }}</p>
+            </div>
+          </div>
+
+          <!-- Passenger Assignment Selector Strip with Add Passenger Button -->
+          <div class="pax-assignment-container" *ngIf="trainCoaches && trainCoaches.length > 0">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+              <h4 class="strip-heading" style="margin: 0;">{{ 'booking.selectSeatsForPassengers' | translate }} ({{ passengersArray.length }}/6):</h4>
+              <button
+                type="button"
+                class="btn btn-primary btn-xs"
+                style="font-weight: 700; padding: 0.35rem 0.75rem; border-radius: 6px;"
+                (click)="addPassenger()"
+                [disabled]="passengersArray.length >= 6"
+              >
+                + {{ 'booking.addPassenger' | translate }} ({{ passengersArray.length }}/6)
+              </button>
+            </div>
+
+            <div class="pax-assignment-chips">
+              <div
+                *ngFor="let p of passengersArray.controls; let idx = index"
+                class="pax-assignment-chip"
+                [class.active]="activePassengerIndex === idx"
+                [class.has-seat]="!!p.get('seatNumber')?.value"
+                (click)="setActivePassenger(idx)"
+              >
+                <div
+                  class="chip-avatar"
+                  [class.female]="p.get('gender')?.value === 'FEMALE'"
+                  [class.male]="p.get('gender')?.value === 'MALE'"
+                  (click)="togglePassengerGender(idx, $event)"
+                  title="Click to toggle gender"
+                >
+                  {{ p.get('gender')?.value === 'FEMALE' ? '👩' : (p.get('gender')?.value === 'MALE' ? '👨' : '🧑') }}
+                </div>
+                <div class="chip-info">
+                  <div class="chip-name-row">
+                    <span class="chip-name">{{ p.get('name')?.value || (('booking.passengerNum' | translate) + ' #' + (idx + 1)) }}</span>
+                    <span
+                      class="chip-gender-tag"
+                      [class.fem]="p.get('gender')?.value === 'FEMALE'"
+                      (click)="togglePassengerGender(idx, $event)"
+                      title="Click to toggle gender"
+                      style="cursor: pointer;"
+                    >
+                      {{ p.get('gender')?.value === 'FEMALE' ? ('booking.female' | translate) : ('booking.male' | translate) }} ↻
+                    </span>
+                  </div>
+                  <div class="chip-seat-status">
+                    <span *ngIf="p.get('seatNumber')?.value" class="chip-assigned-badge">
+                      💺 {{ p.get('coachNumber')?.value || activeCoach }} - {{ p.get('seatNumber')?.value }} ({{ p.get('seatPreference')?.value }})
+                    </span>
+                    <span *ngIf="!p.get('seatNumber')?.value" class="chip-unassigned-hint">
+                      {{ 'booking.unassigned' | translate }} (Click seat on map)
+                    </span>
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.25rem;">
+                  <button
+                    *ngIf="p.get('seatNumber')?.value"
+                    type="button"
+                    class="chip-clear-btn"
+                    (click)="$event.stopPropagation(); removeAssignedSeat(idx)"
+                    title="Unassign seat"
+                  >
+                    ✕
+                  </button>
+                  <button
+                    *ngIf="passengersArray.length > 1"
+                    type="button"
+                    class="chip-clear-btn"
+                    style="color: #ef4444;"
+                    (click)="$event.stopPropagation(); removePassenger(idx)"
+                    title="Remove Passenger"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Color Legend -->
+          <div class="seat-legend-bar" *ngIf="trainCoaches && trainCoaches.length > 0">
+            <div class="legend-item"><span class="swatch available"></span> {{ 'seats.seatAvailable' | translate }}</div>
+            <div class="legend-item"><span class="swatch selected"></span> {{ 'seats.seatSelected' | translate }}</div>
+            <div class="legend-item"><span class="swatch ladies"></span> {{ 'seats.womenQuota' | translate }}</div>
+            <div class="legend-item"><span class="swatch disability"></span> {{ 'seats.disabilityQuota' | translate }}</div>
+            <div class="legend-item"><span class="swatch tatkal"></span> Tatkal Quota</div>
+            <div class="legend-item"><span class="swatch booked"></span> {{ 'seats.seatBooked' | translate }}</div>
+          </div>
+
+          <!-- Coach Carriage Hull Layout -->
+          <div class="carriage-wrapper" *ngIf="trainCoaches && trainCoaches.length > 0">
+            <div class="carriage-hull">
+              <!-- Carriage Header -->
+              <div class="carriage-header">
+                <div class="carriage-header-left">
+                  <span class="door-tag">🚪 {{ 'seats.entry' | translate }}</span>
+                  <span class="railway-badge">Pakistan Railways - {{ 'seats.coach' | translate }} {{ activeCoach }}</span>
+                </div>
+                <div class="carriage-nav-controls">
+                  <button type="button" class="btn-scroll-nav" (click)="scrollCarriage(-300)" title="Scroll left">
+                    ◀ Prev Bays
+                  </button>
+                  <button type="button" class="btn-scroll-nav" (click)="scrollCarriage(300)" title="Scroll right">
+                    Next Bays ▶
+                  </button>
+                </div>
+                <span class="door-tag">🚪 {{ 'seats.exit' | translate }}</span>
+              </div>
+
+              <!-- Bays & Seats Container -->
+              <div id="carriageScrollContainer" class="bays-scroll-container">
+                <div *ngIf="loadingSeats" class="seats-loading-state">
+                  <div class="spinner"></div>
+                  <p>Loading coach layout...</p>
+                </div>
+
+                <div *ngIf="!loadingSeats" class="bays-track">
+                  <div *ngFor="let bay of activeCoachBays" class="bay-section" [class.chair-bay]="isChair" [class.first-ac-bay]="is1A">
+                    <div class="bay-title">
+                      {{ is1A ? ('seats.cabin' | translate) : (isChair ? 'Row' : 'Bay') }} {{ bay.bayNumber }}
+                    </div>
+
+                    <div class="bay-body">
+                      <!-- Main Compartment / Left Seats -->
+                      <div class="compartment-main" [class.three-wide]="isChair">
+                        <button
+                          *ngFor="let seat of bay.mainBay"
+                          type="button"
+                          class="seat-btn"
+                          [class.seat-available]="seat.status === 'AVAILABLE'"
+                          [class.seat-booked]="seat.status !== 'AVAILABLE'"
+                          [class.seat-selected]="isSeatAssignedToAnyPassenger(seat).assigned"
+                          [class.seat-current-pax]="isSeatAssignedToCurrentPassenger(seat)"
+                          [class.quota-ladies]="seat.quotaType === 'LADIES'"
+                          [class.quota-disability]="seat.quotaType === 'DISABILITY'"
+                          [class.quota-tatkal]="seat.quotaType === 'TATKAL'"
+                          [class.seat-locked]="(seat.quotaType === 'TATKAL' && !isTatkalOpen() && !seat.openToAll) || seat.status !== 'AVAILABLE'"
+                          [disabled]="seat.status !== 'AVAILABLE' || (seat.quotaType === 'TATKAL' && !isTatkalOpen() && !seat.openToAll)"
+                          (click)="assignSeatToActivePassenger(seat)"
+                          [title]="seat.seatNumber + ' - ' + seat.berthType + (seat.status !== 'AVAILABLE' ? ' (🔒 Booked & Locked)' : (seat.quotaType ? ' (' + seat.quotaType + ' Quota)' : ''))"
+                        >
+                          <span class="seat-num">{{ seat.seatNumber }}</span>
+                          <span class="berth-lbl">{{ seat.berthType }}</span>
+                          <span *ngIf="seat.status !== 'AVAILABLE'" class="quota-tag-badge booked-locked">🔒 BOOKED</span>
+                          <span *ngIf="seat.status === 'AVAILABLE' && seat.quotaType === 'LADIES'" class="quota-tag-badge ladies">♀ W</span>
+                          <span *ngIf="seat.status === 'AVAILABLE' && seat.quotaType === 'DISABILITY'" class="quota-tag-badge disability">♿ D</span>
+                          <span *ngIf="seat.status === 'AVAILABLE' && seat.quotaType === 'TATKAL' && (!isTatkalOpen() && !seat.openToAll)" class="quota-tag-badge locked">🔒 T</span>
+                          <span *ngIf="isSeatAssignedToAnyPassenger(seat).assigned" class="assigned-pax-tag">
+                            ✓ {{ isSeatAssignedToAnyPassenger(seat).passengerName?.split(' ')[0] }}
+                          </span>
+                        </button>
+                      </div>
+
+                      <!-- Central Aisle (if not 1A coupe) -->
+                      <div class="carriage-aisle" *ngIf="!is1A">
+                        <span class="aisle-txt">{{ 'seats.aisle' | translate }}</span>
+                      </div>
+
+                      <!-- Side Berths / Right Seats (if present) -->
+                      <div class="compartment-side" *ngIf="bay.sideBay && bay.sideBay.length > 0">
+                        <button
+                          *ngFor="let seat of bay.sideBay"
+                          type="button"
+                          class="seat-btn"
+                          [class.seat-available]="seat.status === 'AVAILABLE'"
+                          [class.seat-booked]="seat.status !== 'AVAILABLE'"
+                          [class.seat-selected]="isSeatAssignedToAnyPassenger(seat).assigned"
+                          [class.seat-current-pax]="isSeatAssignedToCurrentPassenger(seat)"
+                          [class.quota-ladies]="seat.quotaType === 'LADIES'"
+                          [class.quota-disability]="seat.quotaType === 'DISABILITY'"
+                          [class.quota-tatkal]="seat.quotaType === 'TATKAL'"
+                          [class.seat-locked]="(seat.quotaType === 'TATKAL' && !isTatkalOpen() && !seat.openToAll) || seat.status !== 'AVAILABLE'"
+                          [disabled]="seat.status !== 'AVAILABLE' || (seat.quotaType === 'TATKAL' && !isTatkalOpen() && !seat.openToAll)"
+                          (click)="assignSeatToActivePassenger(seat)"
+                          [title]="seat.seatNumber + ' - ' + seat.berthType + (seat.status !== 'AVAILABLE' ? ' (🔒 Booked & Locked)' : (seat.quotaType ? ' (' + seat.quotaType + ' Quota)' : ''))"
+                        >
+                          <span class="seat-num">{{ seat.seatNumber }}</span>
+                          <span class="berth-lbl">{{ seat.berthType }}</span>
+                          <span *ngIf="seat.status !== 'AVAILABLE'" class="quota-tag-badge booked-locked">🔒 BOOKED</span>
+                          <span *ngIf="seat.status === 'AVAILABLE' && seat.quotaType === 'LADIES'" class="quota-tag-badge ladies">♀ W</span>
+                          <span *ngIf="seat.status === 'AVAILABLE' && seat.quotaType === 'DISABILITY'" class="quota-tag-badge disability">♿ D</span>
+                          <span *ngIf="seat.status === 'AVAILABLE' && seat.quotaType === 'TATKAL' && (!isTatkalOpen() && !seat.openToAll)" class="quota-tag-badge locked">🔒 T</span>
+                          <span *ngIf="isSeatAssignedToAnyPassenger(seat).assigned" class="assigned-pax-tag">
+                            ✓ {{ isSeatAssignedToAnyPassenger(seat).passengerName?.split(' ')[0] }}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Wizard Navigation Footer -->
+          <div class="wizard-footer seat-footer">
+            <button type="button" class="btn btn-secondary" (click)="goBack()">
+              {{ 'booking.backToPassengers' | translate }}
+            </button>
+            <div class="right-buttons">
+              <button type="button" class="btn btn-outline-secondary" (click)="skipSeatSelection()">
+                {{ 'booking.skipSeats' | translate }}
+              </button>
+              <button type="button" class="btn btn-primary" (click)="goToStep3()">
+                {{ 'booking.continueFood' | translate }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: PANTRY & MEALS -->
+        <div *ngIf="step === 3" class="wizard-card">
+          <div class="card-header-bar">
+            <div>
+              <h3>{{ 'booking.foodMenu' | translate }}</h3>
+              <p>{{ 'booking.cateringSubtitle' | translate }}</p>
+            </div>
+            <span class="badge badge-confirmed">{{ 'booking.cateringTitle' | translate }}</span>
+          </div>
+
+          <!-- Menu Items Grid -->
+          <div class="menu-grid">
+            <div *ngFor="let item of menuItems" class="menu-item-card">
+              <div class="item-info">
+                <span class="item-cat badge badge-available">{{ item.category }}</span>
+                <h4 class="item-title">{{ item.itemName }}</h4>
+                <p class="item-desc">{{ item.description }}</p>
+                <span class="item-price">{{ item.price | pkr }}</span>
+              </div>
+
+              <div class="quantity-controls">
+                <button
+                  type="button"
+                  class="qty-btn"
+                  (click)="updateMealQty(item, -1)"
+                  [disabled]="getMealQty(item.id) === 0"
+                >
+                  −
+                </button>
+                <span class="qty-count">{{ getMealQty(item.id) }}</span>
+                <button
+                  type="button"
+                  class="qty-btn"
+                  (click)="updateMealQty(item, 1)"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="wizard-footer">
+            <button type="button" class="btn btn-secondary" (click)="goBack()">
+              {{ 'booking.backToSeats' | translate }}
+            </button>
+            <button type="button" class="btn btn-primary" (click)="goToStep4()">
+              {{ 'booking.continuePayment' | translate }}
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 4: PAYMENT & CONFIRMATION -->
+        <div *ngIf="step === 4" class="wizard-card">
+          <div class="card-header-bar">
+            <div>
+              <h3>{{ 'booking.paymentMethod' | translate }}</h3>
+              <p>{{ 'booking.paymentPrompt' | translate }}</p>
+            </div>
+            <div class="secure-badge">
+              {{ 'booking.sslEncrypted' | translate }}
+            </div>
+          </div>
+
+          <!-- Payment Method Selection -->
+          <div class="payment-methods-grid">
+            <label
+              class="payment-option-card"
+              [class.selected]="selectedPaymentMethod === 'CREDIT_CARD'"
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="CREDIT_CARD"
+                [(ngModel)]="selectedPaymentMethod"
+              />
+              <div class="option-content">
+                <span class="option-icon">💳</span>
+                <div>
+                  <strong>{{ 'booking.cardPayment' | translate }}</strong>
+                  <span>{{ 'booking.cardProviders' | translate }}</span>
+                </div>
+              </div>
+            </label>
+
+            <label
+              class="payment-option-card"
+              [class.selected]="selectedPaymentMethod === 'UPI'"
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="UPI"
+                [(ngModel)]="selectedPaymentMethod"
+              />
+              <div class="option-content">
+                <span class="option-icon">📱</span>
+                <div>
+                  <strong>{{ 'booking.mobileBanking' | translate }}</strong>
+                  <span>{{ 'booking.mobileProviders' | translate }}</span>
+                </div>
+              </div>
+            </label>
+
+            <label
+              class="payment-option-card"
+              [class.selected]="selectedPaymentMethod === 'NET_BANKING'"
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="NET_BANKING"
+                [(ngModel)]="selectedPaymentMethod"
+              />
+              <div class="option-content">
+                <span class="option-icon">🏦</span>
+                <div>
+                  <strong>{{ 'booking.netBanking' | translate }}</strong>
+                  <span>{{ 'booking.bankProviders' | translate }}</span>
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <!-- Simulation Notice -->
+          <div class="simulation-alert">
+            <span>ℹ️ <strong>{{ 'booking.livePaymentGateway' | translate }}</strong> {{ 'booking.paymentNotice' | translate }}</span>
+          </div>
+
+          <div class="wizard-footer">
+            <button type="button" class="btn btn-secondary" (click)="goBack()" [disabled]="bookingInProgress">
+              {{ 'booking.backCatering' | translate }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary pay-now-btn"
+              (click)="confirmBooking()"
+              [disabled]="bookingInProgress"
+            >
+              <span *ngIf="bookingInProgress" class="spinner"></span>
+              {{ bookingInProgress ? ('booking.processing' | translate) : (('booking.confirmBooking' | translate) + ' (' + (totalPayable | pkr) + ')') }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Live Fare Breakdown -->
+      <div class="wizard-sidebar">
+        <div class="fare-summary-card">
+          <h3 class="summary-title">{{ 'booking.fareSummary' | translate }}</h3>
+
+          <!-- Journey Snippet -->
+          <div class="journey-snippet">
+            <div class="route-point">
+              <span class="code">{{ sourceStationCode }}</span>
+              <span class="arrow">➔</span>
+              <span class="code">{{ destinationStationCode }}</span>
+            </div>
+            <div class="sub-meta">
+              <span class="sub-meta-date-group">
+                {{ 'search.journeyDate' | translate }}:
+                <input
+                  type="date"
+                  class="booking-journey-date-input"
+                  [ngModel]="journeyDate"
+                  (ngModelChange)="onJourneyDateChange($event)"
+                  title="Change Journey Date"
+                />
+              </span>
+              | {{ 'search.classLabel' | translate }}: <strong>{{ classType }}</strong>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Price Breakdown Items -->
+          <div class="breakdown-list">
+            <div class="breakdown-item">
+              <span>{{ 'booking.baseFare' | translate }} ({{ passengersArray.length }} pax)</span>
+              <strong>{{ fareBreakdown.baseFare | pkr }}</strong>
+            </div>
+
+            <div class="breakdown-item discount" *ngIf="fareBreakdown.concessionDiscount > 0">
+              <span>{{ 'booking.concessionDiscount' | translate }}</span>
+              <strong>−{{ fareBreakdown.concessionDiscount | pkr }}</strong>
+            </div>
+
+            <div class="breakdown-item">
+              <span>{{ 'booking.reservationFee' | translate }}</span>
+              <strong>{{ fareBreakdown.reservationFee | pkr }}</strong>
+            </div>
+
+            <div class="breakdown-item" *ngIf="fareBreakdown.gstTax && fareBreakdown.gstTax > 0">
+              <span>{{ 'seats.gstTax' | translate }}</span>
+              <strong>{{ fareBreakdown.gstTax | pkr }}</strong>
+            </div>
+
+            <div class="breakdown-item" *ngIf="mealsTotal > 0">
+              <span>{{ 'booking.mealsTotal' | translate }} ({{ selectedMealsCount }})</span>
+              <strong>{{ mealsTotal | pkr }}</strong>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Grand Total -->
+          <div class="grand-total-row">
+            <span>{{ 'booking.totalPayable' | translate }}</span>
+            <span class="total-figure">{{ totalPayable | pkr }}</span>
+          </div>
+
+          <!-- Features list -->
+          <div class="guarantee-box">
+            <div class="guarantee-item">✓ {{ 'booking.instantPnrRule' | translate }}</div>
+            <div class="guarantee-item">✓ {{ 'booking.smsEmailRule' | translate }}</div>
+            <div class="guarantee-item">✓ {{ 'booking.graduatedRefundRule' | translate }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
