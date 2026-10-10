@@ -1,0 +1,351 @@
+<div class="seats-page">
+  <div class="container">
+    <!-- Top Navigation & Details -->
+    <div class="seats-header">
+      <button class="back-link" (click)="goBack()">
+        ➔ {{ 'search.title' | translate }}
+      </button>
+      <div class="train-summary">
+        <h2>{{ 'seats.title' | translate }}</h2>
+        <div class="train-meta-summary">
+          <span>{{ 'pnr.train' | translate }}: <strong>{{ layout?.trainNumber || ('#' + trainId) }}</strong></span>
+          <span class="meta-divider">•</span>
+          <span>{{ 'search.classLabel' | translate }}: <strong>{{ classType }}</strong></span>
+          <span class="meta-divider">•</span>
+          <span class="date-select-wrapper">
+            <label for="seatsJourneyDateInput" class="journey-date-label"><strong>{{ 'search.journeyDate' | translate }}:</strong></label>
+            <input
+              id="seatsJourneyDateInput"
+              type="date"
+              class="journey-date-input"
+              [ngModel]="journeyDate"
+              (ngModelChange)="onJourneyDateChange($event)"
+              title="Change Journey Date"
+            />
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <div class="spinner spinner-dark"></div>
+      <p>{{ 'common.loadingData' | translate }}</p>
+    </div>
+
+    <!-- Error / Empty State -->
+    <div *ngIf="!loading && (!trainCoaches || trainCoaches.length === 0 || !layout || layout.seats.length === 0)" class="empty-state">
+      <div class="empty-icon">⚠️</div>
+      <h3>Configuration Incomplete</h3>
+      <p>This train is not available for booking because its configuration is incomplete (no coaches or seats allocated by Admin).</p>
+      <button class="btn btn-secondary" (click)="goBack()">
+        ➔ Return to Train Search
+      </button>
+    </div>
+
+    <!-- Main Seat Selection Interface -->
+    <div *ngIf="!loading && trainCoaches && trainCoaches.length > 0 && layout && layout.seats && layout.seats.length > 0" class="layout-grid">
+      <!-- Left: Coach Tabs & Seat Layout -->
+      <div class="coach-viewer-card">
+        <!-- Travel Coach (Select Coach) Switcher at the Top -->
+        <div class="class-selector-box">
+          <div class="class-selector-header">
+            <span class="selector-title">🚆 {{ 'seats.travelCoach' | translate }} ({{ 'seats.selectCoach' | translate }})</span>
+            <span class="current-class-tag">{{ activeCoach }} ({{ classType }})</span>
+          </div>
+
+          <div class="coach-selection-controls">
+            <!-- Select Coach Dropdown -->
+            <div class="coach-dropdown-row">
+              <label for="seatsCoachDropdown" class="coach-select-label">
+                <strong>{{ 'seats.selectCoach' | translate }}</strong>
+              </label>
+              <select
+                id="seatsCoachDropdown"
+                class="form-control coach-select-dropdown"
+                [ngModel]="activeCoach"
+                (ngModelChange)="onCoachDropdownChange($event)"
+              >
+                <option *ngFor="let c of trainCoaches" [value]="c.coachNumber">
+                  {{ c.coachNumber }} ({{ c.classType }} · {{ c.totalSeats }} Seats)
+                </option>
+              </select>
+            </div>
+
+            <!-- Coach Pill Buttons -->
+            <div class="class-pills">
+              <button
+                *ngFor="let c of trainCoaches"
+                type="button"
+                class="class-pill-btn"
+                [class.active]="activeCoach === c.coachNumber"
+                (click)="selectCoachOption(c)"
+              >
+                <span class="pill-code">{{ c.coachNumber }}</span>
+                <span class="pill-name">{{ c.classType }} · {{ c.totalSeats }} Seats</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coach Live Stats Row -->
+        <div class="coach-tabs-row">
+          <div class="coach-tabs">
+            <span class="tabs-label">💺 Coach {{ activeCoach }} Layout:</span>
+          </div>
+
+          <div class="coach-live-stats" *ngIf="activeCoachStats">
+            <span class="stat-badge avail">
+              <span class="dot"></span> {{ activeCoachStats.available }} {{ 'seats.seatAvailable' | translate }}
+            </span>
+            <span class="stat-badge booked">
+              <span class="dot"></span> {{ activeCoachStats.booked }} {{ 'seats.seatBooked' | translate }}
+            </span>
+            <span class="stat-badge selected" *ngIf="activeCoachStats.selected > 0">
+              <span class="dot"></span> {{ activeCoachStats.selected }} {{ 'seats.seatSelected' | translate }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="seat-legend">
+          <div class="legend-item"><span class="legend-box avail"></span> {{ 'seats.seatAvailable' | translate }}</div>
+          <div class="legend-item"><span class="legend-box ladies"></span> {{ 'seats.womenQuota' | translate }}</div>
+          <div class="legend-item"><span class="legend-box disability"></span> {{ 'seats.disabilityQuota' | translate }}</div>
+          <div class="legend-item" *ngIf="!isTatkalOpen()"><span class="legend-box tatkal-locked"></span> 🔒 {{ 'home.tatkalQuota' | translate }} (Locked)</div>
+          <div class="legend-item"><span class="legend-box selected"></span> {{ 'seats.seatSelected' | translate }}</div>
+          <div class="legend-item"><span class="legend-box booked"></span> {{ 'seats.seatBookedOther' | translate }}</div>
+          <div class="legend-item"><span class="legend-box held"></span> {{ 'seats.seatReservedHeld' | translate }}</div>
+          <div class="legend-item"><span class="legend-icon">🪟</span> {{ 'seats.windowView' | translate }}</div>
+        </div>
+
+        <!-- Realistic Graphical Coach Carriage Container -->
+        <div id="seatsCarriageScroll" class="carriage-container">
+          <!-- Carriage Top Roof with Crest & Identifiers -->
+          <div class="carriage-roof">
+            <div class="roof-vent"></div>
+            <div class="carriage-badge">
+              <span class="crest-icon">🇵🇰</span>
+              <span class="carriage-title">{{ 'seats.pakistanRailways' | translate }} — {{ classType }} {{ 'seats.class' | translate }}</span>
+              <span class="carriage-num">{{ 'seats.coach' | translate }} {{ activeCoach }}</span>
+            </div>
+            <div class="carriage-nav-controls">
+              <button type="button" class="btn-scroll-nav" (click)="scrollCarriage(-300)" title="Scroll left">
+                ◀ Prev Bays
+              </button>
+              <button type="button" class="btn-scroll-nav" (click)="scrollCarriage(300)" title="Scroll right">
+                Next Bays ▶
+              </button>
+            </div>
+            <div class="roof-vent"></div>
+          </div>
+
+          <!-- Coach Main Body -->
+          <div class="carriage-body">
+            <!-- Left Vestibule Door -->
+            <div class="vestibule-door door-left">
+              <span class="door-handle"></span>
+              <span class="door-label">{{ 'seats.entry' | translate }}</span>
+            </div>
+
+            <!-- Compartments & Gangway Aisle Section -->
+            <div class="coach-interior">
+              <!-- Top Windows Row -->
+              <div class="coach-windows-row">
+                <div *ngFor="let bay of activeCoachBays" class="coach-window">
+                  <div class="window-pane"></div>
+                </div>
+              </div>
+
+              <!-- Compartment Bays Grid -->
+              <div class="compartments-track">
+                <div *ngFor="let bay of activeCoachBays" class="compartment-bay" [class.chair-bay]="isChair" [class.first-ac-bay]="is1A">
+                  <div class="bay-header">
+                    <span class="bay-pill">{{ is1A ? ('seats.cabin' | translate) : (isChair ? 'Row' : ('seats.cabin' | translate)) }} {{ bay.bayNumber }}</span>
+                  </div>
+
+                  <!-- Main Cabin Section -->
+                  <div class="main-cabin-section">
+                    <div class="berths-cluster" [class.chair-main]="isChair" [class.coupe-main]="is1A">
+                      <div
+                        *ngFor="let seat of bay.mainBay"
+                        class="berth-card"
+                        [class.available]="seat.status === 'AVAILABLE' && !(seat.quotaType === 'TATKAL' && !isTatkalOpen())"
+                        [class.booked]="seat.status !== 'AVAILABLE'"
+                        [class.held]="seat.status === 'HELD'"
+                        [class.selected]="isSeatSelected(seat)"
+                        [class.ladies-quota]="seat.quotaType === 'LADIES'"
+                        [class.disability-quota]="seat.quotaType === 'DISABILITY'"
+                        [class.tatkal-locked]="seat.quotaType === 'TATKAL' && !isTatkalOpen()"
+                        [class.open-to-all]="!!seat.openToAll"
+                        (click)="toggleSeat(seat)"
+                        [title]="seat.seatName + ' • ' + seat.berthType + (seat.status !== 'AVAILABLE' ? ' • 🔒 BOOKED & LOCKED' : (seat.quotaType ? ' • ' + seat.quotaType + ' Quota' : ' • Available'))"
+                      >
+                        <div class="berth-pillow"></div>
+                        <div class="berth-content">
+                          <div class="berth-top">
+                            <span class="seat-id">{{ seat.seatNumber }}</span>
+                            <span *ngIf="isWindowSeat(seat)" class="window-tag">🪟</span>
+                          </div>
+                          <div class="berth-meta">
+                            <span class="berth-type-badge">{{ seat.berthType | slice:0:2 }}</span>
+                            <span *ngIf="seat.status !== 'AVAILABLE'" class="quota-badge booked-locked">🔒 LOCKED</span>
+                            <span *ngIf="seat.status === 'AVAILABLE' && seat.quotaType === 'LADIES'" class="quota-badge ladies">♀ LADIES</span>
+                            <span *ngIf="seat.status === 'AVAILABLE' && seat.quotaType === 'DISABILITY'" class="quota-badge disability">♿ SPECIAL</span>
+                            <span *ngIf="seat.status === 'AVAILABLE' && seat.quotaType === 'TATKAL' && !isTatkalOpen()" class="quota-badge tatkal">🔒 TATKAL</span>
+                          </div>
+                        </div>
+                        <div *ngIf="isSeatSelected(seat)" class="selected-check">✓</div>
+                        <div *ngIf="seat.status !== 'AVAILABLE'" class="locked-icon" title="🔒 Booked & Locked">🔒</div>
+                        <div *ngIf="seat.status === 'AVAILABLE' && seat.quotaType === 'TATKAL' && !isTatkalOpen()" class="locked-icon" title="Tatkal Quota (Locked)">🔒</div>
+                        <div *ngIf="seat.status === 'HELD'" class="held-icon" title="Reserved/Held">⏳</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Central Gangway Aisle Corridor -->
+                  <div class="gangway-aisle" *ngIf="!is1A && bay.sideBay && bay.sideBay.length > 0">
+                    <span class="aisle-line"></span>
+                    <span class="aisle-text">{{ 'seats.aisle' | translate }}</span>
+                    <span class="aisle-line"></span>
+                  </div>
+
+                  <!-- Side Berth Section (Across the Aisle) -->
+                  <div class="side-cabin-section" *ngIf="!is1A && bay.sideBay && bay.sideBay.length > 0">
+                    <div class="side-berths-cluster" [class.chair-side]="isChair">
+                      <div
+                        *ngFor="let seat of bay.sideBay"
+                        class="berth-card side-berth"
+                        [class.available]="seat.status === 'AVAILABLE' && !(seat.quotaType === 'TATKAL' && !isTatkalOpen())"
+                        [class.booked]="seat.status !== 'AVAILABLE'"
+                        [class.held]="seat.status === 'HELD'"
+                        [class.selected]="isSeatSelected(seat)"
+                        [class.ladies-quota]="seat.quotaType === 'LADIES'"
+                        [class.disability-quota]="seat.quotaType === 'DISABILITY'"
+                        [class.tatkal-locked]="seat.quotaType === 'TATKAL' && !isTatkalOpen()"
+                        [class.open-to-all]="!!seat.openToAll"
+                        (click)="toggleSeat(seat)"
+                        [title]="seat.seatName + ' • ' + seat.berthType + (seat.status !== 'AVAILABLE' ? ' • 🔒 BOOKED & LOCKED' : (seat.quotaType ? ' • ' + seat.quotaType + ' Quota' : ' • Available'))"
+                      >
+                        <div class="berth-pillow side-pillow"></div>
+                        <div class="berth-content">
+                          <div class="berth-top">
+                            <span class="seat-id">{{ seat.seatNumber }}</span>
+                            <span *ngIf="isWindowSeat(seat)" class="window-tag">🪟</span>
+                          </div>
+                          <div class="berth-meta">
+                            <span class="berth-type-badge">{{ seat.berthType === 'SIDE_LOWER' ? 'SL' : 'SU' }}</span>
+                            <span *ngIf="seat.status !== 'AVAILABLE'" class="quota-badge booked-locked">🔒 LOCKED</span>
+                            <span *ngIf="seat.status === 'AVAILABLE' && seat.quotaType === 'LADIES'" class="quota-badge ladies">♀ LADIES</span>
+                            <span *ngIf="seat.status === 'AVAILABLE' && seat.quotaType === 'DISABILITY'" class="quota-badge disability">♿ SPECIAL</span>
+                            <span *ngIf="seat.status === 'AVAILABLE' && seat.quotaType === 'TATKAL' && !isTatkalOpen()" class="quota-badge tatkal">🔒 TATKAL</span>
+                          </div>
+                        </div>
+                        <div *ngIf="isSeatSelected(seat)" class="selected-check">✓</div>
+                        <div *ngIf="seat.status !== 'AVAILABLE'" class="locked-icon" title="🔒 Booked & Locked">🔒</div>
+                        <div *ngIf="seat.status === 'AVAILABLE' && seat.quotaType === 'TATKAL' && !isTatkalOpen()" class="locked-icon" title="Tatkal Quota (Locked)">🔒</div>
+                        <div *ngIf="seat.status === 'HELD'" class="held-icon" title="Reserved/Held">⏳</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bottom Windows Row -->
+              <div class="coach-windows-row bottom-windows">
+                <div *ngFor="let bay of activeCoachBays" class="coach-window">
+                  <div class="window-pane"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Vestibule Door -->
+            <div class="vestibule-door door-right">
+              <span class="door-handle"></span>
+              <span class="door-label">{{ 'seats.exit' | translate }}</span>
+            </div>
+          </div>
+
+          <!-- Carriage Undercarriage Bogies -->
+          <div class="carriage-undercarriage">
+            <div class="bogie-wheel left-wheel"></div>
+            <div class="chassis-beam"></div>
+            <div class="bogie-wheel right-wheel"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Booking Summary / Selection Box -->
+      <div class="selection-summary-card">
+        <div class="summary-panel">
+          <h3>{{ 'seats.selectedSeats' | translate }}</h3>
+          <div class="info-row">
+            <span class="label">{{ 'home.quota' | translate }}:</span>
+            <span class="val">{{ quota }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">{{ 'seats.selectedSeats' | translate }}:</span>
+            <span class="val">{{ selectedSeats.length }} / 6</span>
+          </div>
+
+          <!-- Selected Chips -->
+          <div class="selected-chips">
+            <div *ngFor="let s of selectedSeats" class="seat-chip">
+              <span>{{ s.seatName }} ({{ s.berthType }})</span>
+              <button class="remove-seat" (click)="toggleSeat(s)">✕</button>
+            </div>
+            <div *ngIf="selectedSeats.length === 0" class="no-seats-hint">
+              {{ 'seats.clickToSelect' | translate }}
+            </div>
+          </div>
+
+          <!-- Itemized Fare Breakdown & Total -->
+          <div class="fare-box itemized-fare-box">
+            <h4 class="fare-breakdown-title">{{ 'seats.fareBreakdown' | translate }}</h4>
+            
+            <div class="fare-line-item">
+              <span class="item-name">{{ 'seats.baseTrainCost' | translate }} ({{ seatCount }} × {{ unitFare | pkr }})</span>
+              <span class="item-val">{{ baseTrainCost | pkr }}</span>
+            </div>
+            
+            <div class="fare-line-item">
+              <span class="item-name">{{ 'seats.reservationCharges' | translate }} ({{ seatCount }} × Rs. 50)</span>
+              <span class="item-val">{{ reservationCharges | pkr }}</span>
+            </div>
+
+            <div class="fare-line-item">
+              <span class="item-name">{{ 'seats.gstTax' | translate }}</span>
+              <span class="item-val">{{ gstTax | pkr }}</span>
+            </div>
+
+            <div class="fare-divider"></div>
+
+            <div class="fare-row total-fare-row">
+              <span class="total-label">{{ 'seats.totalFare' | translate }}:</span>
+              <strong class="fare-amount">{{ totalEstimatedFare | pkr }}</strong>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="actions-stack">
+            <button
+              class="btn btn-primary btn-block"
+              [disabled]="selectedSeats.length === 0"
+              (click)="proceedToPassengerDetails()"
+            >
+              {{ 'seats.proceedBooking' | translate }} ({{ selectedSeats.length }})
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-secondary btn-block"
+              (click)="proceedWithoutSpecificSeat()"
+            >
+              {{ 'seats.skipAutoAllocate' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
