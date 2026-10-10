@@ -1,0 +1,355 @@
+<div class="ticket-page">
+  <div class="container">
+    <!-- Top Action Bar (hidden when printing) -->
+    <div class="actions-strip no-print">
+      <a routerLink="/bookings" class="back-link">➔ {{ 'myBookings.title' | translate }}</a>
+      <div class="btn-group">
+        <button class="btn btn-secondary btn-sm" (click)="printTicket()">
+          🖨️ {{ 'ticket.printBtn' | translate }}
+        </button>
+        <button class="btn btn-primary btn-sm" (click)="downloadPdf()">
+          📥 {{ 'ticket.downloadPdf' | translate }}
+        </button>
+        <button
+          *ngIf="canCancel()"
+          class="btn btn-danger btn-sm"
+          (click)="openCancelModal()"
+        >
+          {{ 'myBookings.cancelBooking' | translate }}
+        </button>
+        <span *ngIf="ticket && ticket.status === 'CONFIRMED' && !canCancel()" class="badge badge-secondary" style="padding: 0.35rem 0.65rem;">
+          {{ 'myBookings.journeyCompleted' | translate }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state no-print">
+      <div class="spinner"></div>
+      <p>{{ 'common.loadingData' | translate }}</p>
+    </div>
+
+    <!-- Ticket Error -->
+    <div *ngIf="!loading && !ticket" class="empty-state no-print">
+      <div class="empty-icon">⚠️</div>
+      <h3>{{ 'pnr.notFound' | translate }}</h3>
+      <p>{{ 'ticket.couldNotRetrieve' | translate }} <strong>{{ pnr }}</strong>.</p>
+      <a routerLink="/" class="btn btn-primary">{{ 'navbar.home' | translate }}</a>
+    </div>
+
+    <!-- Electronic Reservation Slip (Printable) -->
+    <div *ngIf="!loading && ticket" class="ticket-card printable-ticket">
+      <!-- Ticket Header -->
+      <div class="ticket-header">
+        <div class="header-brand">
+          <div class="logo-box">
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="4" y="3" width="16" height="15" rx="3" />
+              <path d="M4 11h16" />
+              <circle cx="8" cy="15" r="1.5" />
+              <circle cx="16" cy="15" r="1.5" />
+            </svg>
+          </div>
+          <div>
+            <h2>{{ 'ticket.title' | translate }}</h2>
+            <span>{{ 'ticket.subtitle' | translate }}</span>
+          </div>
+        </div>
+
+        <div class="pnr-badge-box">
+          <span class="pnr-label">{{ 'ticket.pnr' | translate }}</span>
+          <span class="pnr-value">{{ ticket.pnr }}</span>
+          <span
+            class="badge"
+            [class.badge-success]="ticket.status === 'CONFIRMED'"
+            [class.badge-info]="ticket.status === 'PARTIALLY_CONFIRMED'"
+            [class.badge-danger]="ticket.status === 'CANCELLED' || ticket.status === 'WAITING_LIST_EXPIRED'"
+            [class.badge-warning]="ticket.status === 'WAITING_LIST'"
+          >
+            {{ ticket.status === 'WAITING_LIST' ? ('WAITLIST (' + (ticket.waitingListCode || 'GNWL') + (ticket.waitingListNumber ? ticket.waitingListNumber : '') + ')') : (ticket.status === 'WAITING_LIST_EXPIRED' ? 'WL EXPIRED (REFUNDED)' : (ticket.status === 'PARTIALLY_CONFIRMED' ? 'PARTIALLY CONFIRMED' : ticket.status)) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Train & Journey Bar -->
+      <div class="journey-bar">
+        <div class="bar-col">
+          <span class="col-label">{{ 'ticket.trainNo' | translate }} & {{ 'ticket.trainName' | translate }}</span>
+          <strong>{{ ticket.trainNumber }} - {{ ticket.trainName }}</strong>
+        </div>
+
+        <div class="bar-col">
+          <span class="col-label">{{ 'pnr.journeyDate' | translate }}</span>
+          <strong>{{ ticket.journeyDate }}</strong>
+        </div>
+
+        <div class="bar-col">
+          <span class="col-label">{{ 'ticket.origin' | translate }} ➔ {{ 'ticket.destination' | translate }}</span>
+          <strong>{{ ticket.sourceStation }} ➔ {{ ticket.destinationStation }}</strong>
+        </div>
+
+        <div class="bar-col">
+          <span class="col-label">{{ 'ticket.depTime' | translate }} - {{ 'ticket.arrTime' | translate }}</span>
+          <strong>{{ ticket.departureTime || '06:00' }} - {{ ticket.arrivalTime || '08:30' }}</strong>
+        </div>
+      </div>
+
+      <!-- Passenger Details Table & Direct Cancellation Action Strip -->
+      <div class="section-block">
+        <div class="section-header-row">
+          <h4 class="section-title">{{ 'ticket.passengers' | translate }}</h4>
+          <div class="header-pax-actions no-print" *ngIf="canCancel()">
+            <button class="btn btn-outline-danger btn-xs" (click)="openCancelModal()">
+              ⚙️ Manage / Cancel Selected Passengers
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>{{ 'booking.passengerName' | translate }}</th>
+                <th>{{ 'booking.passengerAge' | translate }}</th>
+                <th>{{ 'booking.passengerGender' | translate }}</th>
+                <th>{{ 'seats.coach' | translate }}</th>
+                <th>{{ 'pnr.seatNo' | translate }}</th>
+                <th>{{ 'seats.berthType' | translate }}</th>
+                <th>{{ 'common.status' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of ticket.passengers; let i = index" [class.row-cancelled]="p.status === 'CANCELLED'">
+                <td>{{ i + 1 }}</td>
+                <td>
+                  <strong [class.text-cancelled]="p.status === 'CANCELLED'">{{ p.name }}</strong>
+                  <span *ngIf="p.concessionType" class="badge-concession">{{ p.concessionType }}</span>
+                  <span *ngIf="p.allocatedQuota && p.allocatedQuota !== 'GENERAL'" class="badge badge-info" style="font-size: 0.72rem; margin-left: 0.35rem; padding: 0.15rem 0.45rem; background: #e0f2fe; color: #0369a1; border-radius: 4px;">{{ p.allocatedQuota }}</span>
+                </td>
+                <td>{{ p.age }}</td>
+                <td>{{ p.gender }}</td>
+                <td>
+                  <span class="coach-tag" *ngIf="p.status !== 'CANCELLED'">{{ p.seatNumber ? getCoach(p.seatNumber) : ((p.status === 'WL' || p.status === 'WAITING_LIST') ? 'WL' : '—') }}</span>
+                  <span class="text-muted" *ngIf="p.status === 'CANCELLED'">—</span>
+                </td>
+                <td>
+                  <strong class="seat-tag" *ngIf="p.status !== 'CANCELLED'">
+                    {{ p.seatNumber ? p.seatNumber : ((p.waitingListCode || 'GNWL') + (p.waitingListNumber ? p.waitingListNumber : '')) }}
+                  </strong>
+                  <span class="badge-cancelled-seat" *ngIf="p.status === 'CANCELLED'">CANCELLED</span>
+                </td>
+                <td>{{ p.status === 'CANCELLED' ? '—' : (p.seatNumber ? (p.berthType || 'LOWER') : 'WAITLIST') }}</td>
+                <td>
+                  <span class="badge"
+                    [class.badge-success]="p.status === 'CNF' || p.status === 'CONFIRMED'"
+                    [class.badge-warning]="p.status === 'WL' || p.status === 'WAITING_LIST'"
+                    [class.badge-danger]="p.status === 'CANCELLED' || p.status === 'EXPIRED'"
+                  >
+                    {{ p.status === 'CANCELLED' ? 'CANCELLED' : ((p.status === 'WL' || p.status === 'WAITING_LIST') ? ((p.waitingListCode || 'GNWL') + (p.waitingListNumber ? p.waitingListNumber : '')) : (p.status === 'EXPIRED' ? 'EXPIRED' : (p.status === 'CNF' || p.status === 'CONFIRMED' ? ('ticket.confirmedStatus' | translate) : p.status))) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Payment and Fare Breakdown -->
+      <div class="section-block fare-section">
+        <div class="fare-grid">
+          <div class="fare-item">
+            <span>{{ 'booking.baseFare' | translate }}:</span>
+            <strong>{{ ticket.baseFare | pkr }}</strong>
+          </div>
+          <div class="fare-item" *ngIf="ticket.concessionDiscount > 0">
+            <span>{{ 'booking.concessionDiscount' | translate }}:</span>
+            <strong class="text-success">−{{ ticket.concessionDiscount | pkr }}</strong>
+          </div>
+          <div class="fare-item">
+            <span>{{ 'booking.reservationFee' | translate }}:</span>
+            <strong>{{ ticket.reservationFee | pkr }}</strong>
+          </div>
+          <div class="fare-item" *ngIf="ticket.gstTax && ticket.gstTax > 0">
+            <span>{{ 'seats.gstTax' | translate }}:</span>
+            <strong>{{ ticket.gstTax | pkr }}</strong>
+          </div>
+          <div class="fare-item" *ngIf="ticket.foodTotal > 0">
+            <span>{{ 'booking.mealsTotal' | translate }}:</span>
+            <strong>{{ ticket.foodTotal | pkr }}</strong>
+          </div>
+          <div class="fare-item grand-total">
+            <span>{{ 'ticket.totalPaid' | translate }}:</span>
+            <strong class="highlight-price">{{ ticket.totalAmount | pkr }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Security & Verification Footer -->
+      <div class="ticket-footer">
+        <div class="instructions">
+          <strong>{{ 'ticket.instructionsTitle' | translate }}</strong>
+          <ul>
+            <li>{{ 'ticket.instructions' | translate }}</li>
+            <li>{{ 'ticket.instructionId' | translate }}</li>
+            <li>{{ 'ticket.instructionRefund' | translate }}</li>
+          </ul>
+        </div>
+        <div class="qr-placeholder">
+          <div class="qr-box">
+            <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>{{ 'ticket.verifiedPnr' | translate }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Multi-Passenger Cancellation Modal with Real-time Refund Preview and Explicit Confirmation Step -->
+  <div class="custom-modal-backdrop" *ngIf="cancelModalOpen">
+    <div class="custom-modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <span *ngIf="!isConfirmStep">Select Passengers to Cancel</span>
+          <span *ngIf="isConfirmStep" class="text-danger">Cancel selected passengers?</span>
+        </h3>
+        <button class="close-btn" (click)="cancelModalOpen = false">✕</button>
+      </div>
+
+      <div class="modal-body" *ngIf="ticket">
+        <div class="cancel-pnr-summary">
+          <strong>PNR: {{ ticket.pnr }}</strong> • {{ ticket.trainNumber }} {{ ticket.trainName }} ({{ ticket.journeyDate }})
+        </div>
+
+        <!-- STEP 1: SELECT PASSENGERS -->
+        <div *ngIf="!isConfirmStep" class="step-selection-content">
+          <p class="step-desc">
+            Check the passengers you wish to cancel. Unselected passengers will stay active and confirmed on this PNR.
+          </p>
+
+          <div class="passenger-select-list">
+            <div
+              *ngFor="let item of selectablePassengers"
+              class="pax-select-row"
+              [class.checked]="item.isSelected"
+            >
+              <label class="pax-row-label">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="item.isSelected"
+                  (ngModelChange)="onPassengerToggle()"
+                />
+                <span class="pax-row-name">{{ item.passenger.name }}</span>
+                <span class="pax-row-status" [class.status-cnf]="item.passenger.status === 'CNF'" [class.status-wl]="item.passenger.status === 'WL'">
+                  {{ item.passenger.status === 'CNF' ? 'CONFIRMED' : (item.passenger.status === 'WL' ? 'WAITLISTED' : item.passenger.status) }}
+                </span>
+                <span class="pax-row-seat" *ngIf="item.passenger.seatNumber">
+                  • {{ item.passenger.seatNumber }}
+                </span>
+                <span class="pax-row-seat" *ngIf="!item.passenger.seatNumber && item.passenger.waitingListCode">
+                  • {{ item.passenger.waitingListCode }}{{ item.passenger.waitingListNumber }}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Refund Preview -->
+          <div *ngIf="loadingPreview" class="preview-loading">
+            <div class="spinner-sm"></div>
+            <span>Calculating refund amount...</span>
+          </div>
+
+          <div *ngIf="!loadingPreview && cancellationPreview && selectedPassengersCount > 0" class="refund-preview-card">
+            <div class="preview-line">
+              <span>Selected Passengers:</span>
+              <strong>{{ cancellationPreview.selectedPassengerCount }} of {{ selectablePassengers.length }}</strong>
+            </div>
+            <div class="preview-line">
+              <span>Est. Refund Amount:</span>
+              <strong class="text-success">{{ cancellationPreview.totalRefundAmount | pkr }} ({{ cancellationPreview.refundPercentage }}%)</strong>
+            </div>
+            <div class="preview-line" *ngIf="cancellationPreview.totalCancellationCharge > 0">
+              <span>Cancellation Charge:</span>
+              <strong class="text-danger">−{{ cancellationPreview.totalCancellationCharge | pkr }}</strong>
+            </div>
+            <small class="policy-note">{{ cancellationPreview.deductionPolicyNote }}</small>
+          </div>
+
+          <div class="cancellation-action-buttons">
+            <button
+              class="btn btn-danger"
+              [disabled]="selectedPassengersCount === 0"
+              (click)="cancelSelectedPassengers()"
+            >
+              Cancel Selected ({{ selectedPassengersCount }})
+            </button>
+            <button
+              class="btn btn-outline-danger"
+              (click)="cancelEntirePnr()"
+            >
+              Cancel Entire PNR
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 2: CONFIRMATION STEP -->
+        <div *ngIf="isConfirmStep" class="step-confirm-content">
+          <div class="confirm-prompt-box">
+            <h4 class="confirm-title">Are you sure you want to cancel the following passenger(s)?</h4>
+            <div class="confirm-pax-list">
+              <div *ngFor="let p of selectedPassengers" class="confirm-pax-item">
+                <span class="confirm-bullet">✕</span>
+                <strong class="confirm-pax-name">{{ p.name }}</strong>
+                <span class="confirm-pax-badge" [class.badge-cnf]="p.status === 'CNF'" [class.badge-wl]="p.status === 'WL'">
+                  {{ p.status === 'CNF' ? 'Confirmed' : (p.status === 'WL' ? 'Waiting List' : p.status) }}
+                </span>
+                <span class="confirm-pax-berth" *ngIf="p.seatNumber">— {{ p.seatNumber }} ({{ p.berthType || 'LOWER' }})</span>
+                <span class="confirm-pax-berth" *ngIf="!p.seatNumber && p.waitingListCode">— {{ p.waitingListCode }}{{ p.waitingListNumber }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Refund summary in confirmation -->
+          <div *ngIf="cancellationPreview" class="refund-preview-card">
+            <div class="preview-line">
+              <span>Payable Refund Amount:</span>
+              <strong class="text-success font-lg">{{ cancellationPreview.totalRefundAmount | pkr }}</strong>
+            </div>
+            <div class="preview-line">
+              <span>Cancellation Deduction:</span>
+              <strong class="text-danger">−{{ cancellationPreview.totalCancellationCharge | pkr }}</strong>
+            </div>
+            <small class="policy-note">{{ cancellationPreview.deductionPolicyNote }}</small>
+          </div>
+
+          <!-- Reason selection -->
+          <div class="form-group" style="margin-top: 1rem;">
+            <label class="form-label">{{ 'myBookings.cancellationReason' | translate }}</label>
+            <select class="form-control" [(ngModel)]="cancelReason">
+              <option value="Change of travel plans">Change of travel plans</option>
+              <option value="Booking error / duplicate booking">Booking error / duplicate booking</option>
+              <option value="Train schedule / delay conflict">Train schedule / delay conflict</option>
+              <option value="Medical / personal emergency">Medical / personal emergency</option>
+              <option value="Other reason">Other reason</option>
+            </select>
+          </div>
+
+          <div class="modal-footer-actions">
+            <button class="btn btn-secondary" (click)="goBackToSelectStep()" [disabled]="cancelling">
+              [Go Back]
+            </button>
+            <button class="btn btn-danger" (click)="confirmCancellation()" [disabled]="cancelling">
+              <span *ngIf="cancelling" class="spinner-sm"></span>
+              {{ cancelling ? 'Processing...' : '[Confirm Cancellation]' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
