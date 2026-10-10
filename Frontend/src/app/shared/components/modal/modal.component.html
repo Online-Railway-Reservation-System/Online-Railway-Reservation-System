@@ -1,0 +1,35 @@
+<div class="modal-backdrop" *ngIf="isOpen" (click)="onBackdropClick($event)">
+      <div class="modal-dialog" [style.max-width]="maxWidth" (click)="$event.stopPropagation()">
+        <!-- Header -->
+        <div class="modal-header">
+          <h3 class="modal-title">{{ title }}</h3>
+          <button class="modal-close-btn" (click)="onClose()" aria-label="Close modal">
+            ✕
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body">
+          <ng-content></ng-content>
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer" *ngIf="showFooter">
+          <button type="button" class="btn btn-secondary" (click)="onClose()" [disabled]="loading">
+            {{ cancelText }}
+          </button>
+          <button
+            *ngIf="showConfirm"
+            type="button"
+            class="btn"
+            [class.btn-danger]="isDestructive"
+            [class.btn-primary]="!isDestructive"
+            [disabled]="loading || confirmDisabled"
+            (click)="onConfirm()"
+          >
+            <span *ngIf="loading" class="spinner"></span>
+            {{ confirmText }}
+          </button>
+        </div>
+      </div>
+    </div>
