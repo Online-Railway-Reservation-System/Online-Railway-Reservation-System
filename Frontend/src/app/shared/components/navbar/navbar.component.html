@@ -1,0 +1,96 @@
+<header class="navbar">
+  <div class="navbar-container">
+    <!-- Logo / Brand -->
+    <a routerLink="/" class="navbar-brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="4" y="3" width="16" height="15" rx="3" />
+          <path d="M4 11h16" />
+          <path d="M12 3v8" />
+          <circle cx="8" cy="15" r="1.5" />
+          <circle cx="16" cy="15" r="1.5" />
+          <path d="M7 18l-3 3" />
+          <path d="M17 18l3 3" />
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-title">{{ 'navbar.brand' | translate }}</span>
+        <span class="brand-subtitle">{{ 'navbar.subtitle' | translate }}</span>
+      </div>
+    </a>
+
+    <!-- Quick PNR Lookup Bar -->
+    <div class="pnr-quick-lookup">
+      <input
+        type="text"
+        [(ngModel)]="pnrInput"
+        [placeholder]="'navbar.checkPnrPlaceholder' | translate"
+        (keyup.enter)="checkPnr()"
+        maxlength="10"
+      />
+      <button (click)="checkPnr()" [disabled]="!pnrInput || pnrInput.length < 5" aria-label="Search PNR">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation Links -->
+    <nav class="nav-links" [class.open]="mobileMenuOpen">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="mobileMenuOpen = false">
+        {{ 'navbar.home' | translate }}
+      </a>
+      <a routerLink="/search" routerLinkActive="active" (click)="mobileMenuOpen = false">
+        {{ 'navbar.search' | translate }}
+      </a>
+      <a routerLink="/pnr-status" routerLinkActive="active" (click)="mobileMenuOpen = false">
+        {{ 'navbar.pnrStatus' | translate }}
+      </a>
+
+      <ng-container *ngIf="authService.isAuthenticated()">
+        <a routerLink="/bookings" routerLinkActive="active" (click)="mobileMenuOpen = false">
+          {{ 'navbar.bookings' | translate }}
+        </a>
+        <a routerLink="/support" routerLinkActive="active" (click)="mobileMenuOpen = false">
+          {{ 'navbar.support' | translate }}
+        </a>
+        <a routerLink="/profile" routerLinkActive="active" (click)="mobileMenuOpen = false">
+          👤 {{ 'navbar.profile' | translate }}
+        </a>
+        <a *ngIf="authService.isAdmin()" routerLink="/admin" class="admin-badge-link" routerLinkActive="active" (click)="mobileMenuOpen = false">
+          🛡️ {{ 'navbar.adminPortal' | translate }}
+        </a>
+      </ng-container>
+
+      <!-- User Actions / Profile -->
+      <div class="nav-auth">
+        <ng-container *ngIf="authService.isAuthenticated(); else guestButtons">
+          <a routerLink="/profile" class="user-pill" (click)="mobileMenuOpen = false">
+            <span class="user-avatar">{{ userInitials }}</span>
+            <span class="user-name">{{ authService.currentUser()?.fullName || ('navbar.myAccount' | translate) }}</span>
+          </a>
+          <button class="btn btn-sm btn-secondary logout-btn" (click)="logout()">
+            {{ 'navbar.logout' | translate }}
+          </button>
+        </ng-container>
+
+        <ng-template #guestButtons>
+          <a routerLink="/login" class="nav-login-btn" (click)="mobileMenuOpen = false">
+            🔑 {{ 'navbar.login' | translate }}
+          </a>
+          <a routerLink="/register" class="nav-register-btn" (click)="mobileMenuOpen = false">
+            ✨ {{ 'navbar.register' | translate }}
+          </a>
+        </ng-template>
+      </div>
+    </nav>
+
+    <!-- Mobile Hamburger Toggle -->
+    <button class="mobile-toggle" (click)="mobileMenuOpen = !mobileMenuOpen" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+</header>
