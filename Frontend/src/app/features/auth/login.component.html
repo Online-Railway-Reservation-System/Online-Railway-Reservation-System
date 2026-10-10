@@ -1,0 +1,67 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-icon">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="4" y="3" width="16" height="15" rx="3" />
+          <path d="M4 11h16" />
+          <circle cx="8" cy="15" r="1.5" />
+          <circle cx="16" cy="15" r="1.5" />
+        </svg>
+      </div>
+      <h2>{{ 'auth.loginTitle' | translate }}</h2>
+      <p>{{ 'auth.loginSubtitle' | translate }}</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+      <div class="form-group">
+        <label class="form-label" for="email">{{ 'auth.emailLabel' | translate }}</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          class="form-control"
+          placeholder="e.g. customer@example.com"
+          [class.error]="isFieldInvalid('email')"
+        />
+        <span class="form-error" *ngIf="isFieldInvalid('email')">
+          {{ 'auth.validEmailError' | translate }}
+        </span>
+      </div>
+
+      <div class="form-group">
+        <div class="label-row">
+          <label class="form-label" for="password">{{ 'auth.passwordLabel' | translate }}</label>
+          <a routerLink="/forgot-password" class="forgot-link">{{ 'auth.forgotPassword' | translate }}</a>
+        </div>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          class="form-control"
+          placeholder="Enter your password"
+          [class.error]="isFieldInvalid('password')"
+        />
+        <span class="form-error" *ngIf="isFieldInvalid('password')">
+          {{ 'auth.passwordRequired' | translate }}
+        </span>
+      </div>
+
+      <button
+        type="submit"
+        class="btn btn-primary btn-block submit-btn"
+        [disabled]="loginForm.invalid || loading"
+      >
+        <span *ngIf="loading" class="spinner"></span>
+        <span *ngIf="!loading">🔐 </span>
+        {{ loading ? ('common.loading' | translate) : ('auth.loginBtn' | translate) }}
+      </button>
+    </form>
+
+
+
+    <div class="auth-footer">
+      <p>{{ 'auth.noAccount' | translate }} <a routerLink="/register">{{ 'auth.registerNow' | translate }}</a></p>
+    </div>
+  </div>
+</div>
