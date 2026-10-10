@@ -1,0 +1,122 @@
+.admin-page {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .page-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .status-select {
+      width: 160px;
+    }
+
+    .page-title-row h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-navy, #0f2744);
+      margin: 0 0 0.25rem;
+    }
+
+    .page-title-row p {
+      color: var(--text-muted, #64748b);
+      margin: 0;
+      font-size: 0.875rem;
+    }
+
+    .content-card {
+      background: #ffffff;
+      border-radius: var(--radius-lg, 12px);
+      border: 1px solid var(--border-color, #e2e8f0);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+
+    .query-preview-text {
+      font-size: 0.75rem;
+      color: var(--text-muted, #64748b);
+      margin-top: 0.2rem;
+      max-width: 320px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pnr-tag {
+      background: #eff6ff;
+      color: var(--primary-blue, #1e40af);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+
+    .status-indicator {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .status-indicator.open { background: #fef3c7; color: #b45309; }
+    .status-indicator.resolved { background: #dcfce7; color: #15803d; }
+
+    .btn-xs {
+      padding: 0.25rem 0.65rem;
+      font-size: 0.8rem;
+    }
+
+    .query-details-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-color, #e2e8f0);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted, #64748b);
+      margin-bottom: 0.5rem;
+    }
+
+    .query-details-box h4 {
+      margin: 0 0 0.4rem;
+      color: var(--primary-navy, #0f2744);
+    }
+
+    .desc {
+      font-size: 0.85rem;
+      color: var(--text-main, #1e293b);
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .loading-state, .empty-state {
+      background: #ffffff;
+      padding: 3rem;
+      text-align: center;
+      border-radius: 12px;
+      color: var(--text-muted, #64748b);
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(15, 39, 68, 0.1);
+      border-top-color: var(--primary-navy, #0f2744);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }

@@ -1,0 +1,589 @@
+<div class="admin-page">
+  <div class="page-title-row">
+    <div>
+      <h2>{{ 'admin.trainFleet' | translate }}</h2>
+      <p>{{ 'admin.trainsSubtitle' | translate }}</p>
+    </div>
+    <button class="btn btn-primary btn-sm" (click)="openCreateModal()">
+      + {{ 'admin.addNewTrain' | translate }}
+    </button>
+  </div>
+
+  <!-- Search and Filter Toolbar -->
+  <div class="search-filter-toolbar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        [placeholder]="'admin.searchTrainsPlaceholder' | translate"
+        class="search-input"
+      />
+      <button
+        *ngIf="searchQuery"
+        (click)="searchQuery = ''"
+        class="clear-btn"
+      >✕</button>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-item">
+        <label>Status:</label>
+        <select [(ngModel)]="statusFilter" class="filter-select">
+          <option value="ALL">All Statuses</option>
+          <option value="ACTIVE">Active Only</option>
+          <option value="INACTIVE">Inactive Only</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label>Booking:</label>
+        <select [(ngModel)]="bookingFilter" class="filter-select">
+          <option value="ALL">All Booking</option>
+          <option value="ENABLED">Enabled</option>
+          <option value="DISABLED">Disabled</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label>Config:</label>
+        <select [(ngModel)]="configFilter" class="filter-select">
+          <option value="ALL">All Config</option>
+          <option value="READY">Ready</option>
+          <option value="INCOMPLETE">Incomplete</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>{{ 'common.loadingData' | translate }}</p>
+  </div>
+
+  <!-- Clean Trains Fleet Table -->
+  <div *ngIf="!loading" class="content-card">
+    <div class="table-responsive">
+      <table class="table fleet-table">
+        <thead>
+          <tr>
+            <th>{{ 'admin.trainNumber' | translate }}</th>
+            <th>{{ 'admin.trainName' | translate }}</th>
+            <th>{{ 'admin.type' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
+            <th>Booking Status</th>
+            <th>Configuration Status</th>
+            <th style="text-align: right;">{{ 'common.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of filteredTrains">
+            <td><strong class="train-no-badge">{{ t.trainNumber }}</strong></td>
+            <td><strong class="train-name-text">{{ t.trainName }}</strong></td>
+            <td><span class="badge badge-info">{{ t.trainType }}</span></td>
+            <td>
+              <span class="status-indicator" [class.active]="t.activeStatus">
+                {{ t.activeStatus ? ('common.active' | translate) : ('common.inactive' | translate) }}
+              </span>
+            </td>
+            <td>
+              <ng-container *ngIf="readinessMap.get(t.id) as r; else loadingBooking">
+                <span
+                  class="badge"
+                  [ngClass]="r.bookingStatus === 'ENABLED' ? 'badge-booking-enabled' : 'badge-booking-disabled'"
+                >
+                  {{ r.bookingStatus === 'ENABLED' ? 'Enabled' : 'Disabled' }}
+                </span>
+              </ng-container>
+              <ng-template #loadingBooking>
+                <span class="text-muted text-xs">...</span>
+              </ng-template>
+            </td>
+            <td>
+              <ng-container *ngIf="readinessMap.get(t.id) as r; else loadingConfig">
+                <span
+                  class="badge badge-config-pill"
+                  [ngClass]="r.readyForBooking ? 'badge-config-ready' : 'badge-config-incomplete'"
+                  (click)="openReadinessModal(t.id)"
+                  [title]="'Click to view configuration checklist details'"
+                >
+                  {{ r.readyForBooking ? '✓ Ready' : '⚠ Incomplete' }}
+                </span>
+              </ng-container>
+              <ng-template #loadingConfig>
+                <span class="text-muted text-xs">Checking...</span>
+              </ng-template>
+            </td>
+            <td style="text-align: right; white-space: nowrap;">
+              <div class="action-buttons-wrapper">
+                <button class="btn btn-outline-info btn-xs" (click)="openReadinessModal(t.id)" title="View 7-item configuration checklist">
+                  📋 View
+                </button>
+                <button class="btn btn-outline-primary btn-xs" (click)="openCoachModal(t)" title="Manage coaches, classes and seats">
+                  🚃 Coaches
+                </button>
+                <button class="btn btn-outline-secondary btn-xs" (click)="openEditModal(t)" title="Edit train details">
+                  ✏️ Edit
+                </button>
+                
+                <!-- More / Overflow Menu -->
+                <div class="overflow-menu-wrap">
+                  <button
+                    class="btn btn-outline-secondary btn-xs btn-icon"
+                    (click)="toggleMenu(t.id, $event)"
+                    title="More actions"
+                  >
+                    ⋮
+                  </button>
+                  <div
+                    *ngIf="activeMenuTrainId === t.id"
+                    class="overflow-dropdown-menu"
+                    (click)="$event.stopPropagation()"
+                  >
+                    <button
+                      class="dropdown-menu-item text-warning"
+                      (click)="deactivateTrain(t); closeMenu()"
+                      [disabled]="!t.activeStatus"
+                    >
+                      🗑️ Deactivate Train
+                    </button>
+                    <button
+                      class="dropdown-menu-item text-danger"
+                      (click)="promptPermanentDelete(t); closeMenu()"
+                    >
+                      ❌ Delete Train
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredTrains.length === 0">
+            <td colspan="7" class="empty-table-cell">
+              No trains match your search criteria.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add / Edit Train Modal -->
+  <app-modal
+    [isOpen]="modalOpen"
+    [title]="editingTrain ? ('common.edit' | translate) + ' #' + editingTrain.trainNumber : ('admin.addNewTrain' | translate)"
+    [confirmText]="editingTrain ? ('common.save' | translate) : ('common.confirm' | translate)"
+    [loading]="submitting"
+    (close)="modalOpen = false"
+    (confirm)="onSubmit()"
+  >
+    <form [formGroup]="trainForm" class="modal-form">
+      <div class="form-group">
+        <label class="form-label">{{ 'admin.trainNumber' | translate }} *</label>
+        <input
+          type="text"
+          formControlName="trainNumber"
+          class="form-control"
+          placeholder="e.g. 101UP"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">{{ 'admin.trainName' | translate }} *</label>
+        <input
+          type="text"
+          formControlName="trainName"
+          class="form-control"
+          placeholder="e.g. Shalimar Express"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">{{ 'admin.type' | translate }} *</label>
+        <select formControlName="trainType" class="form-control">
+          <option value="PREMIUM">{{ 'admin.premiumExpress' | translate }}</option>
+          <option value="SUPERFAST">{{ 'admin.superfast' | translate }}</option>
+          <option value="EXPRESS">{{ 'admin.express' | translate }}</option>
+          <option value="PASSENGER">{{ 'admin.passengerType' | translate }}</option>
+        </select>
+      </div>
+
+      <div class="form-group checkbox-group">
+        <label>
+          <input type="checkbox" formControlName="activeStatus" />
+          {{ 'common.active' | translate }}
+        </label>
+      </div>
+    </form>
+  </app-modal>
+
+  <!-- Manage Coaches & Seats Modal -->
+  <app-modal
+    [isOpen]="coachModalOpen"
+    [title]="'Coaches & Seats — ' + selectedTrainForCoaches?.trainNumber + ' (' + selectedTrainForCoaches?.trainName + ')'"
+    [confirmText]="'common.confirm' | translate"
+    [maxWidth]="'820px'"
+    (close)="coachModalOpen = false"
+    (confirm)="coachModalOpen = false"
+  >
+    <div class="coach-modal-container">
+      <!-- Add / Edit Coach Form -->
+      <div class="coach-form-card">
+        <div class="coach-form-header">
+          <div class="coach-form-title-wrap">
+            <span class="coach-form-icon">{{ editingCoach ? '✏️' : '➕' }}</span>
+            <h4>
+              {{ editingCoach ? (('admin.editCoach' | translate) + ' ' + editingCoach.coachNumber) : ('admin.addNewCoach' | translate) }}
+            </h4>
+          </div>
+          <button *ngIf="editingCoach" type="button" class="btn btn-outline-secondary btn-xs" (click)="cancelEditCoach()">
+            ✕ {{ 'common.cancel' | translate }}
+          </button>
+        </div>
+
+        <form [formGroup]="coachForm" (ngSubmit)="onSubmitCoach()">
+          <!-- 3-Column Inputs Row -->
+          <div class="coach-inputs-row">
+            <div class="form-group coach-field-col">
+              <label class="form-label">{{ 'admin.coachCode' | translate }} *</label>
+              <input type="text" formControlName="coachNumber" class="form-control" placeholder="e.g. S1, B1, A1" />
+            </div>
+
+            <div class="form-group coach-field-col">
+              <label class="form-label">{{ 'admin.classType' | translate }} *</label>
+              <select formControlName="classType" class="form-control" (ngModelChange)="onCoachClassChange($event)">
+                <option value="SL">{{ 'search.sleeper' | translate }} (SL)</option>
+                <option value="3A">{{ 'search.ac3Tier' | translate }} (3A)</option>
+                <option value="2A">{{ 'search.ac2Tier' | translate }} (2A)</option>
+                <option value="1A">{{ 'home.acFirst' | translate }} (1A)</option>
+                <option value="CC">{{ 'home.chairCar' | translate }} (CC)</option>
+                <option value="2S">{{ 'home.secondSitting' | translate }} (2S)</option>
+              </select>
+            </div>
+
+            <div class="form-group coach-field-col">
+              <div class="label-with-badge">
+                <label class="form-label">{{ 'admin.totalSeats' | translate }} *</label>
+                <span class="seats-req-badge">Min. 10</span>
+              </div>
+              <input type="number" formControlName="totalSeats" class="form-control" min="0" max="150" placeholder="e.g. 72" />
+            </div>
+          </div>
+
+          <!-- Bottom Action & Status Row -->
+          <div class="coach-form-bottom-row">
+            <div class="coach-status-toggle">
+              <label class="custom-toggle-label">
+                <input type="checkbox" formControlName="activeStatus" class="custom-checkbox" />
+                <span class="toggle-text">Active & Enabled for Passenger Booking</span>
+              </label>
+            </div>
+
+            <div class="coach-actions-group">
+              <button *ngIf="editingCoach" type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelEditCoach()">
+                {{ 'common.cancel' | translate }}
+              </button>
+              <button type="submit" class="btn btn-primary btn-sm btn-submit-coach" [disabled]="coachForm.invalid || submittingCoach">
+                <span *ngIf="submittingCoach" class="spinner"></span>
+                {{ editingCoach ? ('common.save' | translate) : ('admin.addNewCoach' | translate) }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Live Dynamic Allocation Preview & Minimum 10 Seats Notice -->
+          <div *ngIf="coachForm.get('totalSeats')?.value !== null" class="allocation-preview-wrap">
+            <div *ngIf="(coachForm.get('totalSeats')?.value || 0) < 10" class="alert-incomplete-coach">
+              <span class="alert-icon">⚠️</span>
+              <div class="alert-text">
+                <strong>Minimum 10 seats required to enable coach.</strong>
+                <span class="alert-subtext">Current: {{ coachForm.get('totalSeats')?.value || 0 }} seats — Coach will remain Disabled / Incomplete.</span>
+              </div>
+            </div>
+
+            <div *ngIf="(coachForm.get('totalSeats')?.value || 0) >= 10" class="allocation-pills-row">
+              <div class="alloc-header">
+                <span class="alloc-title">📊 Dynamic Quota Allocation ({{ coachForm.get('totalSeats')?.value }} Seats):</span>
+              </div>
+              <div class="alloc-badges-wrap">
+                <span class="alloc-pill alloc-gen">
+                  <span class="quota-dot">●</span> General: <strong>{{ calculatedQuotaPreview.general }}</strong>
+                </span>
+                <span class="alloc-pill alloc-tatkal">
+                  <span class="quota-dot">●</span> Tatkal: <strong>{{ calculatedQuotaPreview.tatkal }}</strong>
+                </span>
+                <span class="alloc-pill alloc-ladies">
+                  <span class="quota-dot">●</span> Ladies: <strong>{{ calculatedQuotaPreview.ladies }}</strong>
+                </span>
+                <span class="alloc-pill alloc-dis">
+                  <span class="quota-dot">●</span> Disability: <strong>{{ calculatedQuotaPreview.disability }}</strong> (Lower Berth)
+                </span>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Existing Coaches Table -->
+      <div class="coaches-list-header">
+        <strong>Coaches & Seat Configuration ({{ coachesList.length }})</strong>
+      </div>
+
+      <div *ngIf="loadingCoaches" class="coaches-loading">
+        {{ 'admin.loadingCoaches' | translate }}
+      </div>
+
+      <div *ngIf="!loadingCoaches && coachesList.length === 0" class="coaches-empty">
+        No coaches configured yet. Click Add Coach above to configure at least 1 coach with minimum 10 seats.
+      </div>
+
+      <div *ngIf="!loadingCoaches && coachesList.length > 0" class="table-responsive coach-table-scroll">
+        <table class="table coach-mini-table">
+          <thead>
+            <tr>
+              <th>{{ 'seats.coach' | translate }}</th>
+              <th>{{ 'admin.classType' | translate }}</th>
+              <th>{{ 'admin.totalSeats' | translate }}</th>
+              <th>{{ 'common.status' | translate }}</th>
+              <th style="text-align: right;">{{ 'common.actions' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of coachesList">
+              <td><strong>{{ c.coachNumber }}</strong></td>
+              <td><span class="badge badge-info">{{ c.classType }}</span></td>
+              <td>
+                <strong>{{ c.totalSeats }} seats</strong>
+                <span *ngIf="c.totalSeats < 10" class="badge-seats-short">(&lt; 10 seats)</span>
+              </td>
+              <td>
+                <span
+                  class="badge"
+                  [ngClass]="(c.activeStatus && c.totalSeats >= 10) ? 'badge-coach-enabled' : 'badge-coach-disabled'"
+                >
+                  {{ (c.activeStatus && c.totalSeats >= 10) ? '✓ Enabled' : 'Disabled / Incomplete' }}
+                </span>
+              </td>
+              <td style="text-align: right; white-space: nowrap;">
+                <ng-container *ngIf="canEnableCoach(c)">
+                  <button
+                    *ngIf="!c.activeStatus"
+                    class="btn btn-outline-success btn-xs"
+                    style="margin-right: 0.35rem;"
+                    (click)="toggleCoachStatus(c)"
+                    title="Enable this coach"
+                  >
+                    ✓ Enable
+                  </button>
+                  <button
+                    *ngIf="c.activeStatus"
+                    class="btn btn-outline-warning btn-xs"
+                    style="margin-right: 0.35rem;"
+                    (click)="toggleCoachStatus(c)"
+                    title="Disable this coach"
+                  >
+                    Disable
+                  </button>
+                </ng-container>
+                <ng-container *ngIf="!canEnableCoach(c)">
+                  <button
+                    class="btn btn-outline-secondary btn-xs btn-cannot-enable"
+                    style="margin-right: 0.35rem;"
+                    disabled
+                    title="At least 10 seats are required to enable this coach."
+                  >
+                    Cannot Enable ({{ c.totalSeats }}/10)
+                  </button>
+                </ng-container>
+
+                <button class="btn btn-outline-primary btn-xs" style="margin-right: 0.35rem;" (click)="openEditCoach(c)">
+                  Edit
+                </button>
+                <button class="btn btn-outline-danger btn-xs" (click)="deleteCoach(c)" title="Deactivate Coach">
+                  ✕
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- Configuration Checklist Details Modal -->
+  <app-modal
+    [isOpen]="readinessModalOpen"
+    [title]="'Configuration Checklist — ' + (selectedReadinessTrain?.trainNumber || '') + ' ' + (selectedReadinessTrain?.trainName || '')"
+    confirmText="Close"
+    [maxWidth]="'720px'"
+    (close)="readinessModalOpen = false"
+    (confirm)="readinessModalOpen = false"
+  >
+    <div *ngIf="selectedReadinessTrain" class="readiness-modal-body">
+      <!-- Status Banner -->
+      <div
+        class="readiness-summary-banner"
+        [class.banner-ready]="selectedReadinessTrain.readyForBooking"
+        [class.banner-incomplete]="!selectedReadinessTrain.readyForBooking"
+      >
+        <div>
+          <div class="banner-title">
+            {{ selectedReadinessTrain.readyForBooking ? '✓ Configuration Complete — Ready for Booking' : '⚠ Configuration Incomplete — Not Ready for Booking' }}
+          </div>
+          <p class="banner-desc">
+            {{ selectedReadinessTrain.readyForBooking
+              ? 'All required conditions are satisfied. Passengers can search, view live availability, and book tickets on this train.'
+              : 'This train cannot be booked by passengers until all configuration requirements are fulfilled.' }}
+          </p>
+        </div>
+        <div class="banner-booking-badge">
+          <span
+            class="badge"
+            [style.background-color]="selectedReadinessTrain.bookingStatus === 'ENABLED' ? '#059669' : '#dc2626'"
+            style="color: white; font-size: 0.85rem; padding: 4px 10px; border-radius: 6px; font-weight: 700;"
+          >
+            Booking: {{ selectedReadinessTrain.bookingStatus }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Prerequisites Checklist Cards -->
+      <div class="checklist-items-grid">
+        <!-- 1. Train Details -->
+        <div
+          class="checklist-card-item"
+          [class.item-ok]="selectedReadinessTrain.trainDetailsConfigured"
+          [class.item-fail]="!selectedReadinessTrain.trainDetailsConfigured"
+        >
+          <div>
+            <strong class="item-title">1. Train Details</strong>
+            <div class="item-desc">Train Number, Name, Type ({{ selectedReadinessTrain.trainType }}), Active Status</div>
+          </div>
+          <span class="item-badge" [class.badge-ok]="selectedReadinessTrain.trainDetailsConfigured" [class.badge-fail]="!selectedReadinessTrain.trainDetailsConfigured">
+            {{ selectedReadinessTrain.trainDetailsConfigured ? '✓ Configured' : '✗ Incomplete' }}
+          </span>
+        </div>
+
+        <!-- 2. Route -->
+        <div
+          class="checklist-card-item"
+          [class.item-ok]="selectedReadinessTrain.routeConfigured"
+          [class.item-fail]="!selectedReadinessTrain.routeConfigured"
+        >
+          <div>
+            <strong class="item-title">2. Train Route</strong>
+            <div class="item-desc">Active route mapped in station-route-service</div>
+          </div>
+          <span class="item-badge" [class.badge-ok]="selectedReadinessTrain.routeConfigured" [class.badge-fail]="!selectedReadinessTrain.routeConfigured">
+            {{ selectedReadinessTrain.routeConfigured ? '✓ Configured' : '✗ Incomplete' }}
+          </span>
+        </div>
+
+        <!-- 3. Stops -->
+        <div
+          class="checklist-card-item"
+          [class.item-ok]="selectedReadinessTrain.stopsConfigured"
+          [class.item-fail]="!selectedReadinessTrain.stopsConfigured"
+        >
+          <div>
+            <strong class="item-title">3. Route Stops & Distances</strong>
+            <div class="item-desc">At least 2 sequenced stops with distance from origin</div>
+          </div>
+          <span class="item-badge" [class.badge-ok]="selectedReadinessTrain.stopsConfigured" [class.badge-fail]="!selectedReadinessTrain.stopsConfigured">
+            {{ selectedReadinessTrain.stopsConfigured ? '✓ Configured' : '✗ Incomplete' }}
+          </span>
+        </div>
+
+        <!-- 4. Schedule -->
+        <div
+          class="checklist-card-item"
+          [class.item-ok]="selectedReadinessTrain.scheduleConfigured"
+          [class.item-fail]="!selectedReadinessTrain.scheduleConfigured"
+        >
+          <div>
+            <strong class="item-title">4. Journey Schedule</strong>
+            <div class="item-desc">Departure time, arrival time, duration, and running days</div>
+          </div>
+          <span class="item-badge" [class.badge-ok]="selectedReadinessTrain.scheduleConfigured" [class.badge-fail]="!selectedReadinessTrain.scheduleConfigured">
+            {{ selectedReadinessTrain.scheduleConfigured ? '✓ Configured' : '✗ Incomplete' }}
+          </span>
+        </div>
+
+        <!-- 5. Fare -->
+        <div
+          class="checklist-card-item"
+          [class.item-ok]="selectedReadinessTrain.fareConfigured"
+          [class.item-fail]="!selectedReadinessTrain.fareConfigured"
+        >
+          <div>
+            <strong class="item-title">5. Fare Configuration</strong>
+            <div class="item-desc">Base fare rules for applicable travel classes</div>
+          </div>
+          <span class="item-badge" [class.badge-ok]="selectedReadinessTrain.fareConfigured" [class.badge-fail]="!selectedReadinessTrain.fareConfigured">
+            {{ selectedReadinessTrain.fareConfigured ? '✓ Configured' : '✗ Incomplete' }}
+          </span>
+        </div>
+
+        <!-- 6. At least 1 Enabled Coach -->
+        <div
+          class="checklist-card-item"
+          [class.item-ok]="selectedReadinessTrain.coachesConfigured"
+          [class.item-fail]="!selectedReadinessTrain.coachesConfigured"
+        >
+          <div>
+            <strong class="item-title">6. At least 1 Enabled Coach</strong>
+            <div class="item-desc">Every enabled coach must contain at least 10 seats (Enabled: {{ selectedReadinessTrain.totalCoaches }} coaches)</div>
+          </div>
+          <span class="item-badge" [class.badge-ok]="selectedReadinessTrain.coachesConfigured" [class.badge-fail]="!selectedReadinessTrain.coachesConfigured">
+            {{ selectedReadinessTrain.coachesConfigured ? '✓ Configured (' + selectedReadinessTrain.totalCoaches + ' enabled)' : '✗ Incomplete' }}
+          </span>
+        </div>
+
+        <!-- 7. Enabled Coach has at least 10 Seats -->
+        <div
+          class="checklist-card-item"
+          [class.item-ok]="selectedReadinessTrain.seatsConfigured"
+          [class.item-fail]="!selectedReadinessTrain.seatsConfigured"
+        >
+          <div>
+            <strong class="item-title">7. Enabled Coach has at least 10 Seats</strong>
+            <div class="item-desc">Total physical seats across enabled coaches (Current: {{ selectedReadinessTrain.totalSeats }} seats)</div>
+          </div>
+          <span class="item-badge" [class.badge-ok]="selectedReadinessTrain.seatsConfigured" [class.badge-fail]="!selectedReadinessTrain.seatsConfigured">
+            {{ selectedReadinessTrain.seatsConfigured ? '✓ Configured (' + selectedReadinessTrain.totalSeats + ' seats)' : '✗ Incomplete' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Missing Prerequisites Action Box -->
+      <div *ngIf="selectedReadinessTrain.missingPrerequisites && selectedReadinessTrain.missingPrerequisites.length > 0" class="missing-prereqs-box">
+        <strong>Action Required Before Booking Can Be Enabled:</strong>
+        <ul>
+          <li *ngFor="let m of selectedReadinessTrain.missingPrerequisites">{{ m }}</li>
+        </ul>
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- Confirm Permanent Delete Modal -->
+  <app-modal
+    [isOpen]="confirmDeleteModalOpen"
+    title="Delete Train"
+    confirmText="Delete"
+    cancelText="Cancel"
+    [isDestructive]="true"
+    [loading]="deletingTrain"
+    (close)="onCancelPermanentDelete()"
+    (confirm)="onConfirmPermanentDelete()"
+  >
+    <div class="delete-confirm-body" style="padding: 1rem 0;">
+      <p style="font-size: 1rem; color: #1e293b; margin-bottom: 0.5rem; font-weight: 500;">
+        Are you sure you want to delete this train?
+      </p>
+      <p *ngIf="trainToDelete" style="color: #64748b; font-size: 0.9rem; margin-bottom: 0;">
+        Train: <strong>{{ trainToDelete.trainNumber }}</strong> - {{ trainToDelete.trainName }} ({{ trainToDelete.trainType }})
+      </p>
+    </div>
+  </app-modal>
+</div>
+

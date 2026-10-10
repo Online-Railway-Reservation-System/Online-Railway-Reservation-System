@@ -1,0 +1,144 @@
+.admin-page {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .page-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .page-title-row h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-navy, #0f2744);
+      margin: 0 0 0.25rem;
+    }
+
+    .page-title-row p {
+      color: var(--text-muted, #64748b);
+      margin: 0;
+      font-size: 0.875rem;
+    }
+
+    .selector-card {
+      background: #ffffff;
+      padding: 1.25rem 1.5rem;
+      border-radius: var(--radius-lg, 12px);
+      border: 1px solid var(--border-color, #e2e8f0);
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .selector-label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--primary-navy, #0f2744);
+      white-space: nowrap;
+    }
+
+    .train-dropdown {
+      max-width: 450px;
+    }
+
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 900px) {
+      .schedule-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .content-card {
+      background: #ffffff;
+      border-radius: var(--radius-lg, 12px);
+      border: 1px solid var(--border-color, #e2e8f0);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      padding: 1.5rem;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-color, #e2e8f0);
+    }
+
+    .card-header h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--primary-navy, #0f2744);
+      margin: 0;
+    }
+
+    .tatkal-summary-box {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      background: #f8fafc;
+      padding: 1.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color, #e2e8f0);
+    }
+
+    .rule-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+    }
+
+    .rule-label {
+      color: var(--text-muted, #64748b);
+    }
+
+    .highlight-time {
+      color: var(--primary-blue, #1e40af);
+      font-size: 1rem;
+    }
+
+    .rule-actions {
+      margin-top: 1rem;
+    }
+
+    .btn-block { width: 100%; }
+
+    .btn-xs {
+      padding: 0.2rem 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    .modal-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.15rem;
+    }
+
+    .hint {
+      color: var(--text-muted, #64748b);
+      font-size: 0.75rem;
+    }
+
+    .empty-hint, .card-loading {
+      color: var(--text-muted, #64748b);
+      font-size: 0.875rem;
+      text-align: center;
+      padding: 2rem 0;
+    }

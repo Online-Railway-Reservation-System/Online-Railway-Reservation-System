@@ -1,0 +1,189 @@
+<div class="food-admin-page">
+  <!-- Top Banner -->
+  <div class="admin-header-card">
+    <div class="header-info">
+      <h1>{{ 'admin.cateringTitle' | translate }}</h1>
+      <p>{{ 'admin.cateringDesc' | translate }}</p>
+    </div>
+    <button class="btn btn-primary add-btn" (click)="openAddModal()">
+      <span class="btn-icon">➕</span> {{ 'admin.addNewDish' | translate }}
+    </button>
+  </div>
+
+  <!-- Notifications -->
+  <div *ngIf="successMessage()" class="alert alert-success">
+    <span>✅ {{ successMessage() }}</span>
+  </div>
+
+  <div *ngIf="errorMessage()" class="alert alert-danger">
+    <span>⚠️ {{ errorMessage() }}</span>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="toolbar-card">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="applyFilter()"
+        [placeholder]="'admin.searchDishPlaceholder' | translate"
+        class="search-input"
+      />
+    </div>
+
+    <div class="category-filters">
+      <button
+        *ngFor="let cat of categories"
+        class="filter-pill"
+        [class.active]="selectedCategory === cat"
+        (click)="selectedCategory = cat; applyFilter()"
+      >
+        {{ cat }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>{{ 'admin.loadingCatering' | translate }}</p>
+  </div>
+
+  <!-- Food Items Grid / Table -->
+  <div *ngIf="!loading()" class="food-grid">
+    <div *ngFor="let item of filteredItems()" class="food-card" [class.item-disabled]="!item.available">
+      <div class="card-header">
+        <span class="category-badge cat-{{ item.category.toLowerCase() }}">{{ item.category }}</span>
+        <span class="status-badge" [class.status-available]="item.available" [class.status-unavailable]="!item.available">
+          {{ item.available ? '● AVAILABLE' : '○ UNAVAILABLE' }}
+        </span>
+      </div>
+
+      <div class="card-body">
+        <h3 class="dish-title">{{ item.itemName }}</h3>
+        <p class="dish-desc">{{ item.description || 'Freshly prepared onboard railway meal.' }}</p>
+        <div class="dish-price">
+          <span class="price-label">{{ 'common.price' | translate }}:</span>
+          <span class="price-value">{{ item.price | pkr }}</span>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button
+          class="btn btn-sm"
+          [class.btn-outline-warning]="item.available"
+          [class.btn-outline-success]="!item.available"
+          (click)="toggleAvailability(item)"
+          [title]="item.available ? 'Mark as Unavailable' : 'Mark as Available'"
+        >
+          {{ item.available ? ('admin.disable' | translate) : ('admin.enable' | translate) }}
+        </button>
+
+        <button class="btn btn-sm btn-outline-primary" (click)="openEditModal(item)">
+          ✏️ {{ 'common.edit' | translate }}
+        </button>
+
+        <button class="btn btn-sm btn-outline-danger" (click)="deleteItem(item)">
+          🗑️ {{ 'common.delete' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredItems().length === 0" class="empty-state">
+      <div class="empty-icon">🍽️</div>
+      <h3>{{ 'admin.noCateringFound' | translate }}</h3>
+      <p>{{ 'admin.noCateringFilter' | translate }}</p>
+      <button class="btn btn-primary" (click)="openAddModal()">{{ 'admin.addFirstDish' | translate }}</button>
+    </div>
+  </div>
+
+  <!-- Add / Edit Modal -->
+  <div *ngIf="showModal" class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditing ? ('admin.editCatering' | translate) : ('admin.addNewCatering' | translate) }}</h2>
+        <button class="close-btn" (click)="closeModal()">✕</button>
+      </div>
+
+      <form (ngSubmit)="saveMenuItem()" class="modal-form">
+        <div class="form-group">
+          <label for="itemName">{{ 'admin.dishName' | translate }} <span class="required">*</span></label>
+          <input
+            id="itemName"
+            type="text"
+            [(ngModel)]="currentItem.itemName"
+            name="itemName"
+            required
+            placeholder="e.g. Sindhi Chicken Biryani"
+            class="form-control"
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="category">{{ 'admin.category' | translate }} <span class="required">*</span></label>
+            <select
+              id="category"
+              [(ngModel)]="currentItem.category"
+              name="category"
+              required
+              class="form-control"
+            >
+              <option value="BREAKFAST">{{ 'admin.breakfast' | translate }}</option>
+              <option value="LUNCH">{{ 'admin.lunch' | translate }}</option>
+              <option value="DINNER">{{ 'admin.dinner' | translate }}</option>
+              <option value="SNACKS">{{ 'admin.snacks' | translate }}</option>
+              <option value="BEVERAGES">{{ 'admin.beverages' | translate }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="price">{{ 'common.price' | translate }} (PKR) <span class="required">*</span></label>
+            <input
+              id="price"
+              type="number"
+              [(ngModel)]="currentItem.price"
+              name="price"
+              min="0"
+              step="10"
+              required
+              class="form-control"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">{{ 'common.description' | translate }}</label>
+          <textarea
+            id="description"
+            [(ngModel)]="currentItem.description"
+            name="description"
+            rows="3"
+            placeholder="Description of ingredients, sides, or accompaniments..."
+            class="form-control"
+          ></textarea>
+        </div>
+
+        <div class="form-check">
+          <input
+            type="checkbox"
+            id="available"
+            [(ngModel)]="currentItem.available"
+            name="available"
+            class="check-input"
+          />
+          <label for="available">{{ 'admin.availableForBooking' | translate }}</label>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">{{ 'common.cancel' | translate }}</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading()">
+            {{ isEditing ? ('admin.updateDish' | translate) : ('admin.createDish' | translate) }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

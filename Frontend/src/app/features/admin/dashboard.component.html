@@ -1,0 +1,66 @@
+<div class="dashboard-page">
+  <div class="dash-header">
+    <div>
+      <h2>{{ 'admin.controlCenter' | translate }}</h2>
+      <p>{{ 'admin.realtimeTelemetry' | translate }}</p>
+    </div>
+    <div class="system-time">
+      <span class="live-dot"></span>
+      <span>Operational</span>
+    </div>
+  </div>
+
+  <!-- KPI Stat Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card" routerLink="/admin/trains">
+      <div class="kpi-icon trains-icon">🚆</div>
+      <div class="kpi-info">
+        <span class="kpi-label">{{ 'admin.activeTrains' | translate }}</span>
+        <strong class="kpi-val">{{ trainCount }}</strong>
+      </div>
+    </div>
+
+    <div class="kpi-card" routerLink="/admin/stations">
+      <div class="kpi-icon stations-icon">🏢</div>
+      <div class="kpi-info">
+        <span class="kpi-label">{{ 'admin.totalStations' | translate }}</span>
+        <strong class="kpi-val">{{ stationCount }}</strong>
+      </div>
+    </div>
+
+    <div class="kpi-card" routerLink="/admin/reservations">
+      <div class="kpi-icon bookings-icon">🎟️</div>
+      <div class="kpi-info">
+        <span class="kpi-label">{{ 'admin.totalBookings' | translate }}</span>
+        <strong class="kpi-val">{{ bookingCount }}</strong>
+      </div>
+    </div>
+
+    <div class="kpi-card" routerLink="/admin/customers">
+      <div class="kpi-icon users-icon">👥</div>
+      <div class="kpi-info">
+        <span class="kpi-label">{{ 'admin.totalCustomers' | translate }}</span>
+        <strong class="kpi-val">{{ customerCount }}</strong>
+      </div>
+    </div>
+
+    <div class="kpi-card" routerLink="/admin/support">
+      <div class="kpi-icon support-icon">💬</div>
+      <div class="kpi-info">
+        <span class="kpi-label">{{ 'admin.support' | translate }}</span>
+        <strong class="kpi-val">{{ openQueriesCount }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Action Controls -->
+  <div class="quick-actions-bar">
+    <h3>{{ 'admin.quickActions' | translate }}</h3>
+    <div class="actions-row">
+      <a routerLink="/admin/trains" class="btn btn-primary btn-sm">{{ 'admin.addNewTrain' | translate }}</a>
+      <a routerLink="/admin/stations" class="btn btn-outline-primary btn-sm">{{ 'admin.addNewStation' | translate }}</a>
+      <a routerLink="/admin/schedules-fares" class="btn btn-outline-primary btn-sm">{{ 'admin.configureFareMatrix' | translate }}</a>
+      <a routerLink="/admin/support" class="btn btn-outline-warning btn-sm">{{ 'admin.reviewOpenInquiries' | translate }}</a>
+    </div>
+  </div>
+</div>

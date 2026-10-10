@@ -1,0 +1,103 @@
+<div class="admin-page">
+  <div class="page-title-row">
+    <div>
+      <h2>{{ 'admin.support' | translate }}</h2>
+      <p>{{ 'admin.supportSubtitle' | translate }}</p>
+    </div>
+    <div class="filter-group">
+      <select [(ngModel)]="statusFilter" (ngModelChange)="loadQueries()" class="form-control status-select">
+        <option value="ALL">{{ 'admin.allInquiries' | translate }}</option>
+        <option value="OPEN">{{ 'admin.openOnly' | translate }}</option>
+        <option value="RESOLVED">{{ 'admin.resolved' | translate }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>{{ 'common.loadingData' | translate }}</p>
+  </div>
+
+  <!-- Queries Table -->
+  <div *ngIf="!loading && queries.length > 0" class="content-card">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>{{ 'admin.category' | translate }}</th>
+            <th>{{ 'admin.subject' | translate }}</th>
+            <th>{{ 'admin.passengerEmail' | translate }}</th>
+            <th>{{ 'admin.pnr' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
+            <th>{{ 'admin.date' | translate }}</th>
+            <th style="text-align: right;">{{ 'common.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let q of queries">
+            <td>#{{ q.id }}</td>
+            <td><span class="badge badge-secondary">{{ q.category }}</span></td>
+            <td>
+              <strong>{{ q.subject }}</strong>
+              <div class="query-preview-text">{{ q.description || q.message }}</div>
+            </td>
+            <td>{{ q.customerEmail }}</td>
+            <td>
+              <span *ngIf="q.pnr" class="pnr-tag">{{ q.pnr }}</span>
+              <span *ngIf="!q.pnr" class="text-muted">--</span>
+            </td>
+            <td>
+              <span class="status-indicator" [class.open]="q.status === 'OPEN'" [class.resolved]="q.status === 'RESOLVED'">
+                {{ q.status }}
+              </span>
+            </td>
+            <td>{{ q.createdAt | date:'shortDate' }}</td>
+            <td style="text-align: right;">
+              <button class="btn btn-primary btn-xs" (click)="openReplyModal(q)">
+                {{ (q.adminReply || q.replyMessage) ? ('admin.viewEditReply' | translate) : ('admin.reply' | translate) }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loading && queries.length === 0" class="empty-state">
+        <p>{{ 'admin.noInquiries' | translate }} <strong>{{ statusFilter }}</strong>.</p>
+      </div>
+
+      <!-- Reply Modal -->
+      <app-modal
+        [isOpen]="replyModalOpen"
+        [title]="'Reply to Query #' + selectedQuery?.id"
+        [confirmText]="'admin.sendReply' | translate"
+        [loading]="submitting"
+        (close)="replyModalOpen = false"
+        (confirm)="onSubmitReply()"
+      >
+        <div class="query-details-box" *ngIf="selectedQuery">
+          <div class="meta-row">
+            <span>{{ 'admin.passenger' | translate }}: <strong>{{ selectedQuery.customerEmail }}</strong></span>
+            <span *ngIf="selectedQuery.pnr">{{ 'admin.pnr' | translate }}: <strong>{{ selectedQuery.pnr }}</strong></span>
+          </div>
+          <h4>{{ selectedQuery.subject }}</h4>
+          <p class="desc">{{ selectedQuery.description || selectedQuery.message }}</p>
+        </div>
+
+        <form [formGroup]="replyForm" class="modal-form">
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.officialResponse' | translate }} *</label>
+            <textarea
+              formControlName="replyMessage"
+              rows="4"
+              class="form-control"
+              [placeholder]="'admin.replyPlaceholder' | translate"
+            ></textarea>
+          </div>
+        </form>
+      </app-modal>
+    </div>

@@ -1,0 +1,112 @@
+<div class="admin-page">
+  <div class="page-title-row">
+    <div>
+      <h2>{{ 'admin.routes' | translate }}</h2>
+      <p>{{ 'admin.routesSubtitle' | translate }}</p>
+    </div>
+    <button
+      class="btn btn-primary btn-sm"
+      [disabled]="!selectedTrainId"
+      (click)="openAddStopModal()"
+    >
+      + {{ 'admin.addRouteStop' | translate }}
+    </button>
+  </div>
+
+  <!-- Train Selector Strip -->
+  <div class="selector-card">
+    <label class="selector-label">{{ 'admin.selectTrainConfigure' | translate }}</label>
+    <select [(ngModel)]="selectedTrainId" (ngModelChange)="loadRouteStops()" class="form-control train-dropdown">
+      <option *ngFor="let t of trains" [value]="t.id">
+        {{ t.trainNumber }}
+      </option>
+    </select>
+
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>{{ 'common.loadingData' | translate }}</p>
+  </div>
+
+  <!-- Route Timeline View -->
+  <div *ngIf="!loading && routeStops.length > 0" class="content-card">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>{{ 'admin.seqNumber' | translate }}</th>
+            <th>{{ 'admin.stationCode' | translate }}</th>
+            <th>{{ 'admin.stationName' | translate }}</th>
+            <th>{{ 'admin.distanceOrigin' | translate }}</th>
+            <th>{{ 'admin.haltDuration' | translate }}</th>
+            <th style="text-align: right;">{{ 'common.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let stop of routeStops">
+            <td>
+              <span class="seq-badge">{{ stop.stopSequence }}</span>
+            </td>
+            <td><strong class="code-pill">{{ stop.stationCode }}</strong></td>
+            <td>{{ stop.stationName }}</td>
+            <td>{{ stop.distanceFromOriginKm }} km</td>
+            <td>{{ stop.haltDurationMinutes || 2 }} mins</td>
+            <td style="text-align: right;">
+              <div class="table-actions">
+                <button class="btn btn-secondary btn-xs" (click)="openEditStopModal(stop)" style="margin-right: 0.35rem;">
+                  {{ 'common.edit' | translate }}
+                </button>
+                <button class="btn btn-danger btn-xs" (click)="deleteStop(stop)">
+                  {{ 'common.delete' | translate }}
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && routeStops.length === 0" class="empty-state">
+    <p>{{ 'admin.noRouteStops' | translate }}</p>
+  </div>
+
+  <!-- Add/Edit Stop Modal -->
+  <app-modal
+    [isOpen]="modalOpen"
+    [title]="editingStopId ? ('admin.editRouteStop' | translate) : ('admin.addRouteStop' | translate)"
+    [confirmText]="'common.save' | translate"
+    [loading]="submitting"
+    (close)="modalOpen = false"
+    (confirm)="onSubmitStop()"
+  >
+    <form [formGroup]="stopForm" class="modal-form">
+      <div class="form-group">
+        <label class="form-label">{{ 'admin.stationName' | translate }} *</label>
+        <select formControlName="stationId" class="form-control">
+          <option *ngFor="let s of stations" [value]="s.id">
+            {{ s.stationName }} ({{ s.stationCode }})
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">{{ 'admin.stopSeqOrder' | translate }} *</label>
+        <input type="number" formControlName="stopSequence" class="form-control" min="1" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">{{ 'admin.distanceOriginKm' | translate }} *</label>
+        <input type="number" formControlName="distanceFromOriginKm" class="form-control" min="0" step="0.1" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">{{ 'admin.haltDurationMinutes' | translate }}</label>
+        <input type="number" formControlName="haltDurationMinutes" class="form-control" min="1" />
+      </div>
+    </form>
+  </app-modal>
+</div>

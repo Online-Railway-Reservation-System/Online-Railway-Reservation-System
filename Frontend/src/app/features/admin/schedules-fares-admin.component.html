@@ -1,0 +1,297 @@
+<div class="admin-page">
+  <div class="page-title-row">
+    <div>
+      <h2>{{ 'admin.schedulesFares' | translate }}</h2>
+      <p>{{ 'admin.schedulesSubtitle' | translate }}</p>
+    </div>
+    <div class="action-buttons">
+      <button class="btn btn-outline-primary btn-sm" (click)="openScheduleModal()">
+        + {{ 'admin.addTrainSchedule' | translate }}
+      </button>
+      <button class="btn btn-outline-primary btn-sm" (click)="openFareModal()">
+        + {{ 'admin.configureClassFare' | translate }}
+      </button>
+      <button class="btn btn-primary btn-sm" (click)="openTatkalModal()">
+        ⚙️ {{ 'admin.configureTatkalWindow' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Train Selector -->
+  <div class="selector-card">
+    <label class="selector-label">{{ 'admin.selectTrain' | translate }}</label>
+    <select [(ngModel)]="selectedTrainId" (ngModelChange)="loadTrainData()" class="form-control train-dropdown">
+      <option *ngFor="let t of trains" [value]="t.id">
+        {{ t.trainNumber }}
+      </option>
+    </select>
+
+  </div>
+
+  <!-- Two-Column Layout -->
+  <div class="schedule-grid">
+    <!-- Timetable Column -->
+    <div class="content-card">
+      <div class="card-header">
+        <h3>{{ 'admin.operationalTimetable' | translate }}</h3>
+        <span class="badge badge-info">{{ schedules.length }} Stops</span>
+      </div>
+
+      <div *ngIf="loadingSchedules" class="card-loading">{{ 'common.loadingData' | translate }}</div>
+
+      <div *ngIf="!loadingSchedules && schedules.length > 0" class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>{{ 'admin.departureStation' | translate }}</th>
+              <th>{{ 'admin.arrivalStation' | translate }}</th>
+              <th>{{ 'admin.departureTime' | translate }}</th>
+              <th>{{ 'admin.arrivalTime' | translate }}</th>
+              <th>{{ 'admin.duration' | translate }}</th>
+              <th>{{ 'admin.runningDays' | translate }}</th>
+              <th style="text-align: right;">{{ 'common.actions' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of schedules">
+              <td><strong>{{ s.departureStationCode || s.stationCode }}</strong></td>
+              <td><strong>{{ s.arrivalStationCode || '--' }}</strong></td>
+              <td>{{ s.departureTime || '--:--' }}</td>
+              <td>{{ s.arrivalTime || '--:--' }}</td>
+              <td>{{ s.durationHours ? s.durationHours + ' hrs' : '--' }}</td>
+              <td>
+                <span class="badge badge-secondary" style="font-size: 0.72rem;">{{ s.runningDays || 'Daily' }}</span>
+              </td>
+              <td style="text-align: right; white-space: nowrap;">
+                <button class="btn btn-outline-primary btn-xs" style="margin-right: 0.4rem;" (click)="openScheduleModal(s)">{{ 'common.edit' | translate }}</button>
+                <button class="btn btn-danger btn-xs" (click)="deleteSchedule(s)">✕</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div *ngIf="!loadingSchedules && schedules.length === 0" class="empty-hint">
+        No schedule recorded for this train yet.
+      </div>
+    </div>
+
+    <!-- Tatkal Config Column -->
+    <div class="content-card">
+      <div class="card-header">
+        <h3>{{ 'admin.tatkalRules' | translate }}</h3>
+        <span class="badge badge-accent">{{ 'admin.quotaRules' | translate }}</span>
+      </div>
+
+          <div *ngIf="tatkalConfig" class="tatkal-summary-box">
+            <div class="rule-row">
+              <span class="rule-label">{{ 'admin.advanceBookingWindow' | translate }}</span>
+              <strong>{{ tatkalConfig.advanceDays }} Day Prior (D-1)</strong>
+            </div>
+
+            <div class="rule-row">
+              <span class="rule-label">{{ 'admin.acOpeningTime' | translate }}</span>
+              <strong class="highlight-time">{{ tatkalConfig.acOpeningTime }}</strong>
+            </div>
+
+            <div class="rule-row">
+              <span class="rule-label">{{ 'admin.nonAcOpeningTime' | translate }}</span>
+              <strong class="highlight-time">{{ tatkalConfig.nonAcOpeningTime }}</strong>
+            </div>
+
+            <div class="rule-row">
+              <span class="rule-label">{{ 'admin.tatkalSurcharge' | translate }}</span>
+              <strong>{{ tatkalConfig.surchargePercentage }}% {{ 'admin.aboveBaseFare' | translate }}</strong>
+            </div>
+
+            <div class="rule-actions">
+              <button class="btn btn-outline-primary btn-sm btn-block" (click)="openTatkalModal()">
+                {{ 'admin.editTatkalSettings' | translate }}
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="!tatkalConfig" class="empty-hint">
+            No Tatkal configuration registered. Click "Configure Tatkal Window" to initialize rules.
+          </div>
+        </div>
+      </div>
+
+      <!-- Class-wise Fare Rules Matrix -->
+      <div class="content-card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+          <div>
+            <h3>{{ 'admin.fareMatrix' | translate }}</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">{{ 'admin.fareMatrixDesc' | translate }}</p>
+          </div>
+          <button class="btn btn-primary btn-xs" (click)="openFareModal()">{{ 'admin.newClassFare' | translate }}</button>
+        </div>
+
+        <div *ngIf="loadingFares" class="card-loading">{{ 'common.loadingData' | translate }}</div>
+
+        <div *ngIf="!loadingFares && fareRules.length > 0" class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>{{ 'admin.classType' | translate }}</th>
+                <th>{{ 'admin.baseRateKm' | translate }}</th>
+                <th>{{ 'admin.minimumFare' | translate }}</th>
+                <th>{{ 'admin.reservationFee' | translate }}</th>
+                <th>{{ 'admin.superfastSurcharge' | translate }}</th>
+                <th>{{ 'admin.estFare500Km' | translate }}</th>
+                <th style="text-align: right;">{{ 'common.actions' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let f of fareRules">
+                <td><strong class="code-pill">{{ f.classType }}</strong></td>
+                <td>PKR {{ f.baseFarePerKm | number:'1.2-2' }}</td>
+                <td>PKR {{ f.minimumFare | number:'1.0-0' }}</td>
+                <td>PKR {{ f.reservationFee | number:'1.0-0' }}</td>
+                <td>PKR {{ f.superfastCharge | number:'1.0-0' }}</td>
+                <td><strong class="text-success">PKR {{ (500 * f.baseFarePerKm + f.reservationFee + f.superfastCharge) | number:'1.0-0' }}</strong></td>
+                <td style="text-align: right;">
+                  <button class="btn btn-secondary btn-xs" (click)="openFareModal(f)">{{ 'common.edit' | translate }}</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div *ngIf="!loadingFares && fareRules.length === 0" class="empty-hint">
+          No specific class fare rules registered for this train. Default standard rates are calculated.
+        </div>
+      </div>
+
+      <!-- Add Schedule Stop Modal -->
+      <!-- Add/Edit Schedule Stop Modal -->
+      <app-modal
+        [isOpen]="scheduleModalOpen"
+        [title]="editingSchedule ? 'Edit Train Schedule' : 'Add Train Schedule'"
+        confirmText="Save Schedule"
+        [loading]="submitting"
+        (close)="scheduleModalOpen = false"
+        (confirm)="onSubmitSchedule()"
+      >
+        <form [formGroup]="scheduleForm" class="modal-form">
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.departureStation' | translate }} *</label>
+            <select formControlName="departureStationCode" class="form-control">
+              <option *ngFor="let st of stations" [value]="st.stationCode">
+                {{ st.stationName }} ({{ st.stationCode }})
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.arrivalStation' | translate }} *</label>
+            <select formControlName="arrivalStationCode" class="form-control">
+              <option *ngFor="let st of stations" [value]="st.stationCode">
+                {{ st.stationName }} ({{ st.stationCode }})
+              </option>
+            </select>
+          </div>
+
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label">{{ 'admin.departureTime' | translate }} (HH:mm) *</label>
+              <input type="text" formControlName="departureTime" class="form-control" placeholder="06:00" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">{{ 'admin.arrivalTime' | translate }} (HH:mm) *</label>
+              <input type="text" formControlName="arrivalTime" class="form-control" placeholder="14:30" />
+            </div>
+          </div>
+
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label">{{ 'admin.runningDays' | translate }} *</label>
+              <input type="text" formControlName="runningDays" class="form-control" placeholder="MON,TUE,WED,THU,FRI,SAT,SUN" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">{{ 'admin.duration' | translate }} (Hours) *</label>
+              <input type="number" formControlName="durationHours" class="form-control" step="0.5" min="0.1" />
+            </div>
+          </div>
+        </form>
+      </app-modal>
+
+      <!-- Configure Fare Rule Modal -->
+      <app-modal
+        [isOpen]="fareModalOpen"
+        title="Configure Class Fare Rule"
+        confirmText="Save Fare Rule"
+        [loading]="submitting"
+        (close)="fareModalOpen = false"
+        (confirm)="onSubmitFare()"
+      >
+        <form [formGroup]="fareForm" class="modal-form">
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.classType' | translate }} *</label>
+            <select formControlName="classType" class="form-control">
+              <option value="SL">{{ 'search.sleeper' | translate }}</option>
+              <option value="1A">{{ 'home.acFirst' | translate }}</option>
+              <option value="2A">{{ 'home.ac2Tier' | translate }}</option>
+              <option value="3A">{{ 'home.ac3Tier' | translate }}</option>
+              <option value="CC">{{ 'home.chairCar' | translate }}</option>
+              <option value="2S">{{ 'home.secondSitting' | translate }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.baseRateKm' | translate }} (PKR) *</label>
+            <input type="number" formControlName="baseFarePerKm" class="form-control" step="0.05" min="0.05" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.minimumFare' | translate }} (PKR) *</label>
+            <input type="number" formControlName="minimumFare" class="form-control" min="0" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.reservationFee' | translate }} (PKR) *</label>
+            <input type="number" formControlName="reservationFee" class="form-control" min="0" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.superfastSurcharge' | translate }} (PKR) *</label>
+            <input type="number" formControlName="superfastCharge" class="form-control" min="0" />
+          </div>
+        </form>
+      </app-modal>
+
+      <!-- Tatkal Modal -->
+      <app-modal
+        [isOpen]="tatkalModalOpen"
+        title="Configure Tatkal Reservation Window"
+        confirmText="Save Tatkal Rules"
+        [loading]="submitting"
+        (close)="tatkalModalOpen = false"
+        (confirm)="onSubmitTatkal()"
+      >
+        <form [formGroup]="tatkalForm" class="modal-form">
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.advanceBookingWindow' | translate }} *</label>
+            <input type="number" formControlName="advanceDays" class="form-control" min="1" max="10" />
+            <small class="hint">{{ 'admin.standardAdvanceHint' | translate }}</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.acOpeningTime' | translate }} *</label>
+            <input type="text" formControlName="acOpeningTime" class="form-control" placeholder="10:00:00" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.nonAcOpeningTime' | translate }} *</label>
+            <input type="text" formControlName="nonAcOpeningTime" class="form-control" placeholder="11:00:00" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.tatkalSurcharge' | translate }} (%) *</label>
+            <input type="number" formControlName="surchargePercentage" class="form-control" min="0" max="100" />
+          </div>
+        </form>
+      </app-modal>
+    </div>

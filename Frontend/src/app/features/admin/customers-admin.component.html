@@ -1,0 +1,211 @@
+<div class="admin-page">
+  <div class="page-title-row">
+    <div>
+      <h2>{{ 'admin.customers' | translate }}</h2>
+      <p>{{ 'admin.customersSubtitle' | translate }}</p>
+    </div>
+    <div class="header-actions">
+      <div class="action-btn-group">
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm"
+          (click)="viewPdf()"
+          [disabled]="generatingPdf || loading || filteredCustomers.length === 0"
+          title="Open PDF report in new browser tab for currently selected filter"
+        >
+          <span *ngIf="generatingPdf" class="btn-spinner"></span>
+          👁️ {{ 'admin.viewPdf' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          (click)="downloadPdf()"
+          [disabled]="generatingPdf || loading || filteredCustomers.length === 0"
+          title="Download PDF report file for currently selected filter"
+        >
+          <span *ngIf="generatingPdf" class="btn-spinner"></span>
+          📥 {{ 'admin.downloadPdf' | translate }}
+        </button>
+      </div>
+      <div class="summary-pill">
+        {{ 'admin.totalCustomers' | translate }}: <strong>{{ filteredCustomers.length }}</strong>
+        <span *ngIf="selectedStatusFilter !== 'ALL'" class="total-sub">/ {{ countAll }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Filter Bar -->
+  <div class="filter-toolbar">
+    <div class="filter-tabs">
+      <button
+        type="button"
+        class="filter-tab-btn"
+        [class.active]="selectedStatusFilter === 'ALL'"
+        (click)="setStatusFilter('ALL')"
+      >
+        <span>{{ 'admin.allPassengers' | translate }}</span>
+        <span class="tab-badge">{{ countAll }}</span>
+      </button>
+      <button
+        type="button"
+        class="filter-tab-btn"
+        [class.active]="selectedStatusFilter === 'ACTIVE'"
+        (click)="setStatusFilter('ACTIVE')"
+      >
+        <span class="status-dot dot-active"></span>
+        <span>{{ 'admin.activePassengers' | translate }}</span>
+        <span class="tab-badge badge-active">{{ countActive }}</span>
+      </button>
+      <button
+        type="button"
+        class="filter-tab-btn"
+        [class.active]="selectedStatusFilter === 'SUSPENDED'"
+        (click)="setStatusFilter('SUSPENDED')"
+      >
+        <span class="status-dot dot-suspended"></span>
+        <span>{{ 'admin.suspendedPassengers' | translate }}</span>
+        <span class="tab-badge badge-suspended">{{ countSuspended }}</span>
+      </button>
+    </div>
+    <div class="active-filter-label" *ngIf="selectedStatusFilter !== 'ALL'">
+      Showing <strong>{{ selectedStatusFilter }}</strong> passengers ({{ filteredCustomers.length }})
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>{{ 'common.loadingData' | translate }}</p>
+  </div>
+
+  <!-- Customers Table -->
+  <div *ngIf="!loading" class="content-card">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>{{ 'profile.fullName' | translate }}</th>
+            <th>{{ 'profile.email' | translate }}</th>
+            <th>{{ 'profile.mobile' | translate }}</th>
+            <th>{{ 'profile.gender' | translate }}</th>
+            <th>{{ 'profile.dob' | translate }}</th>
+            <th>{{ 'admin.accountStatus' | translate }}</th>
+            <th style="text-align: right;">{{ 'common.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody *ngIf="paginatedCustomers.length > 0">
+          <tr *ngFor="let c of paginatedCustomers">
+            <td>{{ c.id }}</td>
+            <td><strong>{{ c.fullName }}</strong></td>
+            <td>{{ c.email }}</td>
+            <td>{{ c.mobile || '--' }}</td>
+            <td>{{ c.gender || '--' }}</td>
+            <td>{{ c.dateOfBirth || '--' }}</td>
+            <td>
+              <span class="status-indicator" [class.active]="c.status === 'ACTIVE'" [class.suspended]="c.status === 'SUSPENDED' || c.status === 'BLOCKED'">
+                {{ (c.status === 'ACTIVE' || !c.status) ? ('common.active' | translate) : ('common.suspended' | translate) }}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <button
+                *ngIf="c.status !== 'SUSPENDED' && c.status !== 'BLOCKED'"
+                class="btn btn-danger btn-xs"
+                (click)="toggleStatus(c, 'SUSPENDED')"
+              >
+                {{ 'admin.suspend' | translate }}
+              </button>
+              <button
+                *ngIf="c.status === 'SUSPENDED' || c.status === 'BLOCKED'"
+                class="btn btn-outline-primary btn-xs"
+                (click)="toggleStatus(c, 'ACTIVE')"
+              >
+                {{ 'common.active' | translate }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+        <tbody *ngIf="filteredCustomers.length === 0">
+          <tr>
+            <td colspan="8" class="empty-state-cell">
+              <div class="empty-message">
+                <span class="empty-icon">👥</span>
+                <p>{{ 'admin.noPassengersMatch' | translate }}</p>
+                <button *ngIf="selectedStatusFilter !== 'ALL'" class="btn btn-outline-primary btn-xs" (click)="setStatusFilter('ALL')">
+                  Show All Passengers
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="pagination-footer" *ngIf="filteredCustomers.length > 0">
+      <div class="pagination-info">
+        Showing <strong>{{ paginationStartIndex }}–{{ paginationEndIndex }}</strong> of <strong>{{ filteredCustomers.length }}</strong> passengers
+        <span *ngIf="selectedStatusFilter !== 'ALL'" class="total-sub">(filtered from {{ countAll }} total)</span>
+      </div>
+
+      <div class="pagination-controls">
+        <div class="page-size-selector">
+          <label class="page-size-label">Rows per page:</label>
+          <select [ngModel]="pageSize" (ngModelChange)="setPageSize($event)" class="page-size-select">
+            <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
+          </select>
+        </div>
+
+        <div class="pagination-nav-btns">
+          <button
+            type="button"
+            class="pagination-btn nav-btn-first"
+            [disabled]="currentPage <= 1"
+            (click)="firstPage()"
+            title="First Page"
+          >
+            « First
+          </button>
+          <button
+            type="button"
+            class="pagination-btn nav-btn-prev"
+            [disabled]="currentPage <= 1"
+            (click)="prevPage()"
+            title="Previous Page"
+          >
+            ‹ Prev
+          </button>
+
+          <button
+            *ngFor="let pNum of pageNumbers"
+            type="button"
+            class="pagination-btn page-num-btn"
+            [class.active]="pNum === currentPage"
+            (click)="goToPage(pNum)"
+          >
+            {{ pNum }}
+          </button>
+
+          <button
+            type="button"
+            class="pagination-btn nav-btn-next"
+            [disabled]="currentPage >= totalPages"
+            (click)="nextPage()"
+            title="Next Page"
+          >
+            Next ›
+          </button>
+          <button
+            type="button"
+            class="pagination-btn nav-btn-last"
+            [disabled]="currentPage >= totalPages"
+            (click)="lastPage()"
+            title="Last Page"
+          >
+            Last »
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

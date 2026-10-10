@@ -1,0 +1,385 @@
+<div class="admin-page">
+  <div class="page-title-row">
+    <div>
+      <h2>{{ 'admin.reservations' | translate }}</h2>
+      <p>{{ 'admin.reservationsSubtitle' | translate }}</p>
+    </div>
+    <div class="header-actions">
+      <div class="action-btn-group">
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm"
+          (click)="viewPdf()"
+          [disabled]="generatingPdf || loading || filteredReservations.length === 0"
+          title="Open PDF report in new browser tab for currently selected filter"
+        >
+          <span *ngIf="generatingPdf" class="btn-spinner"></span>
+          👁️ {{ 'admin.viewPdf' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          (click)="downloadPdf()"
+          [disabled]="generatingPdf || loading || filteredReservations.length === 0"
+          title="Download PDF report file for currently selected filter"
+        >
+          <span *ngIf="generatingPdf" class="btn-spinner"></span>
+          📥 {{ 'admin.downloadPdf' | translate }}
+        </button>
+      </div>
+      <button class="btn btn-outline-warning btn-sm" (click)="prepareChart()" [disabled]="preparingChart" title="Finalize chart 4h before departure, release quota seats to waitlist, and auto-refund remaining expired waitlists">
+        <span *ngIf="preparingChart" class="btn-spinner"></span>
+        📋 Prepare Chart
+      </button>
+      <button class="btn btn-primary btn-sm" (click)="openDelayModal()">
+        📢 Broadcast Delay
+      </button>
+      <div class="summary-pill">
+        {{ 'admin.totalBookings' | translate }}: <strong>{{ filteredReservations.length }}</strong>
+        <span *ngIf="isFilterActive" class="total-sub">/ {{ countAll }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Toolbar -->
+  <div class="filter-toolbar">
+    <div class="filter-inputs-group">
+      <!-- Train Filter -->
+      <div class="filter-item">
+        <label class="filter-label">🚆 {{ 'admin.filterByTrain' | translate }}:</label>
+        <select
+          class="form-control filter-select"
+          [ngModel]="selectedTrainNumber"
+          (ngModelChange)="setTrainFilter($event)"
+        >
+          <option value="ALL">{{ 'admin.allTrains' | translate }}</option>
+          <option *ngFor="let t of trains" [value]="t.trainNumber">
+            {{ t.trainNumber }} - {{ t.trainName }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Journey Date Filter -->
+      <div class="filter-item">
+        <label class="filter-label">📅 {{ 'admin.filterByJourneyDate' | translate }}:</label>
+        <div class="date-filter-wrap">
+          <input
+            type="date"
+            class="form-control filter-date-input"
+            [ngModel]="selectedJourneyDate"
+            (ngModelChange)="setJourneyDateFilter($event)"
+          />
+          <button
+            *ngIf="selectedJourneyDate"
+            type="button"
+            class="btn btn-outline-secondary btn-xs btn-clear-date"
+            (click)="clearDateFilter()"
+            title="Clear date and view all dates"
+          >
+            ✕ {{ 'admin.clearDate' | translate }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Status Filter Tabs -->
+      <!-- Status Filter Tabs -->
+      <div class="filter-item">
+        <label class="filter-label">🏷️ {{ 'admin.filterByStatus' | translate }}:</label>
+        <div class="status-tabs-wrap">
+          <button
+            type="button"
+            class="status-tab-btn"
+            [class.active]="selectedStatusFilter === 'ALL'"
+            (click)="setStatusFilter('ALL')"
+          >
+            <span>{{ 'admin.allStatuses' | translate }}</span>
+            <span class="tab-badge">{{ countAll }}</span>
+          </button>
+          <button
+            type="button"
+            class="status-tab-btn"
+            [class.active]="selectedStatusFilter === 'CONFIRMED'"
+            (click)="setStatusFilter('CONFIRMED')"
+          >
+            <span class="status-dot dot-confirmed"></span>
+            <span>{{ 'admin.confirmedBookings' | translate }}</span>
+            <span class="tab-badge badge-confirmed">{{ countConfirmed }}</span>
+          </button>
+          <button
+            type="button"
+            class="status-tab-btn"
+            [class.active]="selectedStatusFilter === 'PARTIALLY_CONFIRMED'"
+            (click)="setStatusFilter('PARTIALLY_CONFIRMED')"
+          >
+            <span class="status-dot dot-partially-confirmed"></span>
+            <span>{{ 'admin.partiallyConfirmedBookings' | translate }}</span>
+            <span class="tab-badge badge-partially-confirmed">{{ countPartiallyConfirmed }}</span>
+          </button>
+          <button
+            type="button"
+            class="status-tab-btn"
+            [class.active]="selectedStatusFilter === 'WAITING_LIST'"
+            (click)="setStatusFilter('WAITING_LIST')"
+          >
+            <span class="status-dot dot-waiting-list"></span>
+            <span>{{ 'admin.waitingListBookings' | translate }}</span>
+            <span class="tab-badge badge-waiting-list">{{ countWaitingList }}</span>
+          </button>
+          <button
+            type="button"
+            class="status-tab-btn"
+            [class.active]="selectedStatusFilter === 'CANCELLED'"
+            (click)="setStatusFilter('CANCELLED')"
+          >
+            <span class="status-dot dot-cancelled"></span>
+            <span>{{ 'admin.cancelledBookings' | translate }}</span>
+            <span class="tab-badge badge-cancelled">{{ countCancelled }}</span>
+          </button>
+          <button
+            type="button"
+            class="status-tab-btn"
+            [class.active]="selectedStatusFilter === 'WAITING_LIST_EXPIRED'"
+            (click)="setStatusFilter('WAITING_LIST_EXPIRED')"
+          >
+            <span class="status-dot dot-expired"></span>
+            <span>{{ 'admin.wlExpiredBookings' | translate }}</span>
+            <span class="tab-badge badge-expired">{{ countExpired }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Reset Button -->
+      <div class="filter-actions" *ngIf="isFilterActive">
+        <button type="button" class="btn btn-outline-danger btn-xs" (click)="clearFilters()">
+          ✕ {{ 'admin.resetFilters' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Filter Summary -->
+    <div class="active-filter-summary">
+      <span class="badge-filter-mode" [class.active-mode]="isFilterActive">
+        {{ isFilterActive ? 'Filtered View' : 'All Bookings' }}
+      </span>
+      <span class="active-filter-detail">
+        <strong *ngIf="selectedTrainNumber !== 'ALL'">Train: {{ selectedTrainNumber }}</strong>
+        <strong *ngIf="selectedTrainNumber === 'ALL'">All Trains</strong>
+        <span class="filter-sep">•</span>
+        <strong *ngIf="selectedJourneyDate">Date: {{ selectedJourneyDate }}</strong>
+        <strong *ngIf="!selectedJourneyDate">All Dates</strong>
+        <span class="filter-sep">•</span>
+        <strong *ngIf="selectedStatusFilter !== 'ALL'">Status: {{ selectedStatusFilter }}</strong>
+        <strong *ngIf="selectedStatusFilter === 'ALL'">All Statuses</strong>
+      </span>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>{{ 'common.loadingData' | translate }}</p>
+  </div>
+
+  <!-- Table Card -->
+  <div *ngIf="!loading" class="content-card">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>{{ 'ticket.pnr' | translate }}</th>
+            <th>{{ 'pnr.train' | translate }}</th>
+            <th>{{ 'booking.passengerDetails' | translate }}</th>
+            <th>{{ 'pnr.route' | translate }}</th>
+            <th>{{ 'pnr.journeyDate' | translate }}</th>
+            <th>{{ 'home.classType' | translate }} / {{ 'home.quota' | translate }}</th>
+            <th>{{ 'booking.fareSummary' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
+            <th style="text-align: right;">{{ 'common.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody *ngIf="paginatedReservations.length > 0">
+          <tr *ngFor="let r of paginatedReservations">
+            <td><strong class="pnr-tag">{{ r.pnr }}</strong></td>
+            <td>
+              <div class="train-cell">
+                <span class="train-cell-no">{{ r.trainNumber }}</span>
+                <span class="train-cell-name">{{ r.trainName }}</span>
+              </div>
+            </td>
+            <td>
+              <strong>{{ r.customerEmail || ('Customer #' + r.customerId) }}</strong>
+            </td>
+            <td>
+              <div class="route-cell">
+                <span class="stn-code">{{ r.sourceStationCode }}</span>
+                <span class="route-arrow">➔</span>
+                <span class="stn-code">{{ r.destinationStationCode }}</span>
+              </div>
+            </td>
+            <td>{{ r.journeyDate }}</td>
+            <td>{{ r.classType }} ({{ r.quota }})</td>
+            <td><strong>{{ (r.finalAmount || r.totalFare) | pkr }}</strong></td>
+            <td>
+              <span class="status-indicator"
+                [class.confirmed]="isConfirmed(r)"
+                [class.partially-confirmed]="isPartiallyConfirmed(r)"
+                [class.cancelled]="r.status === 'CANCELLED' || r.status === 'WAITING_LIST_EXPIRED'"
+                [style.background]="isPartiallyConfirmed(r) ? '#e0f2fe' : (isWaitingList(r) ? '#fef3c7' : (r.status === 'WAITING_LIST_EXPIRED' ? '#f1f5f9' : null))"
+                [style.color]="isPartiallyConfirmed(r) ? '#0369a1' : (isWaitingList(r) ? '#b45309' : (r.status === 'WAITING_LIST_EXPIRED' ? '#475569' : null))"
+                [style.borderColor]="isPartiallyConfirmed(r) ? '#0284c7' : (isWaitingList(r) ? '#f59e0b' : (r.status === 'WAITING_LIST_EXPIRED' ? '#94a3b8' : null))"
+              >
+                {{ isPartiallyConfirmed(r) ? 'PARTIALLY CONFIRMED' : (isWaitingList(r) ? ((r.waitingListCode || 'GNWL') + (r.waitingListNumber ? r.waitingListNumber : '')) : (r.status === 'WAITING_LIST_EXPIRED' ? 'WL EXPIRED' : r.status)) }}
+              </span>
+            </td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="btn btn-outline-primary btn-xs" style="margin-right: 0.35rem;" (click)="openDelayModal(r)" title="Broadcast delay to passengers on this train">
+                📢 Delay Alert
+              </button>
+              <a [routerLink]="['/ticket', r.pnr]" class="btn btn-outline-primary btn-xs">
+                {{ 'myBookings.viewTicket' | translate }}
+              </a>
+            </td>
+          </tr>
+        </tbody>
+        <tbody *ngIf="filteredReservations.length === 0">
+          <tr>
+            <td colspan="9" class="empty-state-cell">
+              <div class="empty-message">
+                <span class="empty-icon">🚆</span>
+                <p>{{ 'admin.noReservationsMatch' | translate }}</p>
+                <button *ngIf="isFilterActive" class="btn btn-outline-primary btn-xs" (click)="clearFilters()">
+                  {{ 'admin.resetFilters' | translate }}
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="pagination-footer" *ngIf="filteredReservations.length > 0">
+      <div class="pagination-info">
+        Showing <strong>{{ paginationStartIndex }}–{{ paginationEndIndex }}</strong> of <strong>{{ filteredReservations.length }}</strong> bookings
+        <span *ngIf="isFilterActive" class="total-sub">(filtered from {{ countAll }} total)</span>
+      </div>
+
+      <div class="pagination-controls">
+        <div class="page-size-selector">
+          <label class="page-size-label">Rows per page:</label>
+          <select [ngModel]="pageSize" (ngModelChange)="setPageSize($event)" class="page-size-select">
+            <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
+          </select>
+        </div>
+
+        <div class="pagination-nav-btns">
+          <button
+            type="button"
+            class="pagination-btn nav-btn-first"
+            [disabled]="currentPage <= 1"
+            (click)="firstPage()"
+            title="First Page"
+          >
+            « First
+          </button>
+          <button
+            type="button"
+            class="pagination-btn nav-btn-prev"
+            [disabled]="currentPage <= 1"
+            (click)="prevPage()"
+            title="Previous Page"
+          >
+            ‹ Prev
+          </button>
+
+          <button
+            *ngFor="let pNum of pageNumbers"
+            type="button"
+            class="pagination-btn page-num-btn"
+            [class.active]="pNum === currentPage"
+            (click)="goToPage(pNum)"
+          >
+            {{ pNum }}
+          </button>
+
+          <button
+            type="button"
+            class="pagination-btn nav-btn-next"
+            [disabled]="currentPage >= totalPages"
+            (click)="nextPage()"
+            title="Next Page"
+          >
+            Next ›
+          </button>
+          <button
+            type="button"
+            class="pagination-btn nav-btn-last"
+            [disabled]="currentPage >= totalPages"
+            (click)="lastPage()"
+            title="Last Page"
+          >
+            Last »
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Train Delay Broadcast Modal -->
+  <app-modal
+    [isOpen]="delayModalOpen"
+    title="Broadcast Train Delay Notification"
+    [confirmText]="'admin.sendDelayAlert' | translate"
+    [loading]="submittingDelay"
+    (close)="delayModalOpen = false"
+    (confirm)="onSubmitDelay()"
+  >
+    <div style="margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-muted); line-height: 1.5;">
+      Send an emergency delay SMS/Email broadcast to all confirmed and waitlisted passengers booked on this train for the chosen journey date.
+    </div>
+
+    <form [formGroup]="delayForm" class="modal-form">
+      <div class="form-group">
+        <label class="form-label">{{ 'pnr.train' | translate }} *</label>
+        <select formControlName="trainNumber" class="form-control" *ngIf="trains.length > 0">
+          <option *ngFor="let t of trains" [value]="t.trainNumber">
+            {{ t.trainNumber }}
+          </option>
+        </select>
+
+        <input
+          *ngIf="trains.length === 0"
+          type="text"
+          formControlName="trainNumber"
+          class="form-control"
+          placeholder="e.g. TR-101"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">{{ 'admin.delayedJourneyDate' | translate }} *</label>
+        <input type="date" formControlName="journeyDate" class="form-control" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">{{ 'admin.delayDuration' | translate }} *</label>
+        <input
+          type="text"
+          formControlName="delayTime"
+          class="form-control"
+          [placeholder]="'admin.delayTimePlaceholder' | translate"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">{{ 'admin.delayReason' | translate }} *</label>
+        <textarea
+          formControlName="reason"
+          rows="3"
+          class="form-control"
+          [placeholder]="'admin.delayReasonPlaceholder' | translate"
+        ></textarea>
+      </div>
+    </form>
+  </app-modal>
+</div>

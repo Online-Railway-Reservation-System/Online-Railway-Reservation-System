@@ -1,0 +1,118 @@
+<div class="admin-page">
+  <div class="page-title-row">
+    <div>
+      <h2>{{ 'admin.stations' | translate }}</h2>
+      <p>{{ 'admin.stationsSubtitle' | translate }}</p>
+    </div>
+    <button class="btn btn-primary btn-sm" (click)="openCreateModal()">
+      + {{ 'admin.addNewStation' | translate }}
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>{{ 'common.loadingData' | translate }}</p>
+  </div>
+
+  <!-- Stations Table -->
+  <div *ngIf="!loading" class="content-card">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>{{ 'admin.stationCode' | translate }}</th>
+            <th>{{ 'admin.stationName' | translate }}</th>
+            <th>{{ 'admin.city' | translate }}</th>
+            <th>{{ 'admin.state' | translate }}</th>
+            <th>{{ 'common.status' | translate }}</th>
+            <th style="text-align: right;">{{ 'common.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of stations">
+            <td>{{ s.id }}</td>
+            <td><strong class="code-pill">{{ s.stationCode }}</strong></td>
+            <td><strong>{{ s.stationName }}</strong></td>
+            <td>{{ s.city }}</td>
+            <td>{{ s.state }}</td>
+            <td>
+              <span class="status-indicator" [class.active]="s.activeStatus">
+                {{ s.activeStatus ? ('common.active' | translate) : ('common.inactive' | translate) }}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <button class="btn btn-outline-primary btn-xs" (click)="openEditModal(s)" style="margin-right: 0.5rem;">
+                {{ 'common.edit' | translate }}
+              </button>
+              <button class="btn btn-danger btn-xs" (click)="deleteStation(s)" [disabled]="!s.activeStatus">
+                {{ 'common.delete' | translate }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+      <!-- Add / Edit Modal -->
+      <app-modal
+        [isOpen]="modalOpen"
+        [title]="editingStation ? ('common.edit' | translate) + ' ' + editingStation.stationCode : ('admin.addNewStation' | translate)"
+        [confirmText]="editingStation ? ('common.save' | translate) : ('common.confirm' | translate)"
+        [loading]="submitting"
+        (close)="modalOpen = false"
+        (confirm)="onSubmit()"
+      >
+        <form [formGroup]="stationForm" class="modal-form">
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.stationCode' | translate }} *</label>
+            <input
+              type="text"
+              formControlName="stationCode"
+              class="form-control"
+              placeholder="e.g. KHI, HYD, LHR"
+              maxlength="5"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.stationName' | translate }} *</label>
+            <input
+              type="text"
+              formControlName="stationName"
+              class="form-control"
+              placeholder="e.g. Karachi Cantt"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.city' | translate }} *</label>
+            <input
+              type="text"
+              formControlName="city"
+              class="form-control"
+              placeholder="e.g. Karachi"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{{ 'admin.state' | translate }} *</label>
+            <input
+              type="text"
+              formControlName="state"
+              class="form-control"
+              placeholder="e.g. Sindh"
+            />
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" formControlName="activeStatus" />
+              {{ 'common.active' | translate }}
+            </label>
+          </div>
+        </form>
+      </app-modal>
+    </div>

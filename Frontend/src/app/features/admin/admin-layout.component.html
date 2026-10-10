@@ -1,0 +1,65 @@
+<div class="admin-shell">
+  <!-- Admin Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand">
+      <div class="shield-icon">🛡️</div>
+      <div>
+        <strong>{{ 'admin.portal' | translate }}</strong>
+        <small>{{ 'admin.controlCenter' | translate }}</small>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item">
+        📊 {{ 'admin.dashboard' | translate }}
+      </a>
+      <a routerLink="/admin/trains" routerLinkActive="active" class="nav-item">
+        🚆 {{ 'admin.trainFleet' | translate }}
+      </a>
+      <a routerLink="/admin/stations" routerLinkActive="active" class="nav-item">
+        🏢 {{ 'admin.stations' | translate }}
+      </a>
+      <a routerLink="/admin/routes" routerLinkActive="active" class="nav-item">
+        🗺️ {{ 'admin.routes' | translate }}
+      </a>
+      <a routerLink="/admin/schedules-fares" routerLinkActive="active" class="nav-item">
+        🕒 {{ 'admin.schedulesFares' | translate }}
+      </a>
+      <a routerLink="/admin/reservations" routerLinkActive="active" class="nav-item">
+        🎟️ {{ 'admin.reservations' | translate }}
+      </a>
+      <a routerLink="/admin/food" routerLinkActive="active" class="nav-item">
+        🍲 {{ 'admin.catering' | translate }}
+      </a>
+      <a routerLink="/admin/customers" routerLinkActive="active" class="nav-item">
+        👥 {{ 'admin.customers' | translate }}
+      </a>
+      <a routerLink="/admin/support" routerLinkActive="active" class="nav-item">
+        💬 {{ 'admin.support' | translate }}
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a routerLink="/" class="return-home-link">
+        ➔ {{ 'admin.passengerView' | translate }}
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Admin Workspace -->
+  <main class="admin-content">
+    <div class="admin-topbar">
+      <div class="breadcrumb-trail">
+        <span>{{ 'admin.portal' | translate }}</span> / <strong>{{ 'admin.controlCenter' | translate }}</strong>
+      </div>
+      <div class="admin-user-pill">
+        <span class="admin-tag">{{ 'admin.administrator' | translate }}</span>
+        <span class="admin-email">{{ authService.currentUser()?.email }}</span>
+      </div>
+    </div>
+
+    <div class="admin-body">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>
