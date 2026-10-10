@@ -1,0 +1,215 @@
+<div class="profile-page">
+  <div class="container">
+    <div class="profile-layout">
+      <!-- Left: User Mini Profile -->
+      <div class="profile-sidebar">
+        <div class="user-card">
+          <div class="avatar-large">{{ initials }}</div>
+          <h3 class="user-name">{{ profile?.fullName || authService.currentUser()?.fullName || 'Valued Passenger' }}</h3>
+          <span class="user-email">{{ profile?.email || authService.currentUser()?.email || 'passenger@railway.com' }}</span>
+          <span class="status-badge" [class.active]="profile?.status === 'ACTIVE'">
+            {{ profile?.status || 'ACTIVE' }} PASSENGER
+          </span>
+        </div>
+
+        <!-- Tab Buttons -->
+        <div class="profile-nav">
+          <button
+            class="nav-item"
+            [class.active]="activeTab === 'DETAILS'"
+            (click)="activeTab = 'DETAILS'"
+          >
+            👤 {{ 'profile.personalInfo' | translate }}
+          </button>
+          <button
+            class="nav-item"
+            [class.active]="activeTab === 'SECURITY'"
+            (click)="activeTab = 'SECURITY'"
+          >
+            🔒 {{ 'profile.changePassword' | translate }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Active Tab Content -->
+      <div class="profile-content">
+        <!-- TAB 1: PERSONAL DETAILS -->
+        <div *ngIf="activeTab === 'DETAILS'" class="content-card">
+          <div class="content-header">
+            <h3>{{ 'profile.personalInfo' | translate }}</h3>
+            <p>{{ 'profile.subtitle' | translate }}</p>
+          </div>
+
+          <form [formGroup]="profileForm" (ngSubmit)="onUpdateProfile()">
+            <div class="form-grid">
+              <div class="form-group span-2">
+                <label class="form-label">{{ 'profile.fullName' | translate }} *</label>
+                <input 
+                  type="text" 
+                  formControlName="fullName" 
+                  class="form-control" 
+                  [class.is-invalid]="profileForm.get('fullName')?.invalid && profileForm.get('fullName')?.touched" 
+                  placeholder="e.g. Muhammad Ali"
+                />
+                <span *ngIf="profileForm.get('fullName')?.invalid && profileForm.get('fullName')?.touched" class="field-error-text">
+                  Please enter a valid full name (at least 2 characters).
+                </span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">{{ 'profile.email' | translate }} (Primary)</label>
+                <input 
+                  type="email" 
+                  [value]="profile?.email || authService.currentUser()?.email || ''" 
+                  disabled 
+                  class="form-control disabled-input" 
+                />
+                <small class="hint">{{ 'profile.emailImmutableHint' | translate }}</small>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">{{ 'profile.mobile' | translate }}</label>
+                <input 
+                  type="tel" 
+                  formControlName="mobile" 
+                  class="form-control" 
+                  maxlength="15" 
+                  placeholder="e.g. 03001234567"
+                  [class.is-invalid]="profileForm.get('mobile')?.invalid && profileForm.get('mobile')?.touched" 
+                />
+                <span *ngIf="profileForm.get('mobile')?.invalid && profileForm.get('mobile')?.touched" class="field-error-text">
+                  Please enter a valid mobile number (7 to 15 digits).
+                </span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">{{ 'profile.gender' | translate }}</label>
+                <select formControlName="gender" class="form-control">
+                  <option value="MALE">{{ 'booking.male' | translate }}</option>
+                  <option value="FEMALE">{{ 'booking.female' | translate }}</option>
+                  <option value="OTHER">{{ 'booking.other' | translate }}</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">{{ 'profile.dob' | translate }}</label>
+                <input type="date" formControlName="dateOfBirth" class="form-control" />
+              </div>
+
+              <div class="form-group span-2">
+                <label class="form-label">{{ 'profile.address' | translate }}</label>
+                <textarea formControlName="address" rows="2" class="form-control" placeholder="Enter residential / mailing address"></textarea>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" [disabled]="savingProfile">
+                <span *ngIf="savingProfile" class="spinner"></span>
+                {{ savingProfile ? ('common.loading' | translate) : ('profile.updateBtn' | translate) }}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- TAB 3: SECURITY / PASSWORD -->
+        <div *ngIf="activeTab === 'SECURITY'" class="content-card">
+          <div class="content-header flex-header">
+            <div>
+              <h3>{{ 'profile.securityTitle' | translate }}</h3>
+              <p>{{ 'profile.securitySubtitle' | translate }}</p>
+            </div>
+            <div class="security-mode-toggle">
+              <button
+                type="button"
+                class="btn-toggle-mode"
+                [class.active]="resetMode === 'CHANGE'"
+                (click)="resetMode = 'CHANGE'"
+              >
+                {{ 'profile.changeWithCurrent' | translate }}
+              </button>
+              <button
+                type="button"
+                class="btn-toggle-mode"
+                [class.active]="resetMode === 'OTP'"
+                (click)="resetMode = 'OTP'"
+              >
+                {{ 'profile.resetViaOtp' | translate }}
+              </button>
+            </div>
+          </div>
+
+          <!-- MODE 1: Standard Change Password with Current Password -->
+          <form *ngIf="resetMode === 'CHANGE'" [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" class="password-form">
+            <div class="form-group">
+              <label class="form-label">{{ 'profile.currentPassword' | translate }} *</label>
+              <input type="password" formControlName="currentPassword" class="form-control" placeholder="Enter your current password" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">{{ 'profile.newPassword' | translate }} *</label>
+              <input type="password" formControlName="newPassword" class="form-control" placeholder="Enter new strong password" />
+              <small class="hint">{{ 'profile.minCharsHint' | translate }}</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">{{ 'profile.confirmPassword' | translate }} *</label>
+              <input type="password" formControlName="confirmPassword" class="form-control" placeholder="Confirm new password" />
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" [disabled]="passwordForm.invalid || savingPassword">
+                <span *ngIf="savingPassword" class="spinner"></span>
+                {{ savingPassword ? ('common.loading' | translate) : ('common.save' | translate) }}
+              </button>
+            </div>
+          </form>
+
+          <!-- MODE 2: Reset Password via Email OTP (if user forgot current password) -->
+          <div *ngIf="resetMode === 'OTP'" class="otp-reset-box">
+            <div class="otp-banner">
+              <span class="otp-icon">📧</span>
+              <div class="otp-banner-text">
+                <strong>{{ 'profile.forgotCurrentPrompt' | translate }}</strong>
+                <p>{{ 'profile.otpSendNotice' | translate }} <strong>{{ profile?.email || authService.currentUser()?.email }}</strong>.</p>
+              </div>
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm"
+                (click)="sendResetOtp()"
+                [disabled]="sendingOtp"
+              >
+                <span *ngIf="sendingOtp" class="spinner"></span>
+                {{ otpSent ? ('profile.resendOtp' | translate) : ('profile.sendOtpToEmail' | translate) }}
+              </button>
+            </div>
+
+            <form *ngIf="otpSent" [formGroup]="otpForm" (ngSubmit)="onResetWithOtp()" class="password-form" style="margin-top: 1.25rem;">
+              <div class="form-group">
+                <label class="form-label">{{ 'profile.otpLabel' | translate }} *</label>
+                <input type="text" formControlName="otp" class="form-control" placeholder="Enter 6-digit OTP code" maxlength="8" />
+                <small class="hint">{{ 'profile.otpEmailHint' | translate }}</small>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">{{ 'profile.newPassword' | translate }} *</label>
+                <input type="password" formControlName="newPassword" class="form-control" placeholder="Enter new strong password" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">{{ 'profile.confirmPassword' | translate }} *</label>
+                <input type="password" formControlName="confirmPassword" class="form-control" placeholder="Confirm new password" />
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" [disabled]="otpForm.invalid || resettingOtp">
+                  <span *ngIf="resettingOtp" class="spinner"></span>
+                  {{ resettingOtp ? ('profile.resettingPassword' | translate) : ('profile.resetAndSave' | translate) }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

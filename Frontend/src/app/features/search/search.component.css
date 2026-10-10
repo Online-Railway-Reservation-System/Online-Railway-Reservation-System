@@ -1,0 +1,1095 @@
+.search-page {
+      background: #f8fafc;
+      min-height: calc(100vh - 160px);
+      padding-bottom: 4rem;
+    }
+
+    /* SEARCH STRIP */
+    .search-strip {
+      background: linear-gradient(135deg, #01411C 0%, #064e28 50%, #0B5345 100%);
+      color: #ffffff;
+      padding: 1.5rem 0;
+      box-shadow: 0 4px 15px rgba(1, 65, 28, 0.2);
+    }
+
+    .strip-grid {
+      display: grid;
+      grid-template-columns: 2fr 2fr 1.5fr 1.5fr 1.5fr auto;
+      gap: 1rem;
+      align-items: flex-end;
+    }
+
+    @media (max-width: 900px) {
+      .strip-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .strip-field label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.5px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .strip-select, .strip-input {
+      width: 100%;
+      height: 42px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1.5px solid rgba(255, 255, 255, 0.35);
+      border-radius: 8px;
+      color: #ffffff;
+      padding: 0 0.85rem;
+      font-size: 0.92rem;
+      font-weight: 500;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .strip-select:focus, .strip-input:focus {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: #C5A059;
+      box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.35);
+    }
+
+    .strip-select option {
+      background: #01411C;
+      color: #ffffff;
+    }
+
+    .strip-action button {
+      height: 42px;
+      padding: 0 1.8rem;
+      background: #C5A059;
+      color: #01411C;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    .strip-action button:hover {
+      background: #d4af37;
+      transform: translateY(-1px);
+    }
+
+    /* RESULTS */
+    .results-container {
+      margin-top: 2rem;
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color, #e2e8f0);
+      padding-bottom: 1rem;
+    }
+
+    .results-header h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-navy, #0f2744);
+      margin: 0 0 0.25rem;
+    }
+
+    .search-meta {
+      color: var(--text-muted, #64748b);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .tab-btn {
+      background: #ffffff;
+      border: 1px solid var(--border-color, #e2e8f0);
+      padding: 0.4rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.825rem;
+      font-weight: 600;
+      color: var(--text-muted, #64748b);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--primary-navy, #0f2744);
+      color: #ffffff;
+      border-color: var(--primary-navy, #0f2744);
+    }
+
+    /* LOADING & EMPTY */
+    .loading-state, .empty-state {
+      text-align: center;
+      padding: 4rem 1rem;
+      background: #ffffff;
+      border-radius: var(--radius-lg, 12px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .big-spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid rgba(15, 39, 68, 0.1);
+      border-top-color: var(--primary-navy, #0f2744);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1.25rem;
+    }
+
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    /* TRAIN CARDS */
+    .trains-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .train-card {
+      background: #ffffff;
+      border-radius: var(--radius-lg, 12px);
+      border: 1.5px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      padding: 1.15rem 1.35rem;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .train-card:hover {
+      box-shadow: 0 8px 18px rgba(1, 65, 28, 0.08);
+      border-color: #cbd5e1;
+    }
+
+    .train-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.85rem;
+    }
+
+    .train-identity {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .train-num {
+      background: #ecfdf5;
+      color: #01411C;
+      border: 1px solid #a7f3d0;
+      font-weight: 800;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      letter-spacing: 0.5px;
+    }
+
+    .train-name {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .run-tag {
+      font-size: 0.78rem;
+      color: #047857;
+      font-weight: 700;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    /* TIMELINE */
+    .journey-timeline {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr 1fr;
+      align-items: center;
+      margin-bottom: 0.9rem;
+      padding: 0.75rem 1.15rem;
+      background: #f8fafc;
+      border: 1px solid #f1f5f9;
+      border-radius: 10px;
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .journey-timeline {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        text-align: center;
+      }
+      .time-block.dest.right {
+        text-align: center;
+      }
+      .time-station-row.right {
+        justify-content: center;
+      }
+    }
+
+    .time-block {
+      padding: 0;
+    }
+
+    .time-block.right {
+      text-align: right;
+    }
+
+    .time-station-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.45rem;
+    }
+
+    .time-station-row.right {
+      justify-content: flex-end;
+    }
+
+    .time {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--primary-navy, #0f2744);
+      line-height: 1.2;
+    }
+
+    .st-code {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #01411C;
+    }
+
+    .st-date {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted, #64748b);
+      margin-top: 0.15rem;
+    }
+
+    .duration-block {
+      text-align: center;
+      padding: 0 0.5rem;
+    }
+
+    .distance-duration-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      margin-top: 0.25rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .dot-separator {
+      color: #94a3b8;
+      font-weight: bold;
+    }
+
+    .duration-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #01411C;
+    }
+
+    .route-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: 0.2rem 0;
+    }
+
+    .line {
+      height: 2px;
+      background: #cbd5e1;
+      width: 75%;
+    }
+
+    .arrow-indicator {
+      position: absolute;
+      color: #C5A059;
+      font-size: 0.75rem;
+      background: #f8fafc;
+      padding: 0 2px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .dot.origin { background: #10b981; }
+    .dot.dest { background: #ef4444; }
+
+    .distance-label {
+      font-size: 0.8rem;
+      color: var(--text-muted, #64748b);
+    }
+
+    /* STRUCTURED COMPACT AVAILABILITY & TATKAL STRIP */
+    .card-availability-wrapper {
+      margin-bottom: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      background: #fafbfc;
+      border: 1px solid #f1f5f9;
+      border-radius: 8px;
+      padding: 0.65rem 0.85rem;
+    }
+
+    .availability-primary-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+    }
+
+    .class-fare-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 0.3rem 0.65rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .class-fare-chip:hover {
+      border-color: #01411C;
+      background: #f0fdf4;
+    }
+
+    .class-fare-chip.selected {
+      border-color: #01411C;
+      background: #f0fdf4;
+      box-shadow: 0 0 0 1px #01411C;
+    }
+
+    .chip-class-name {
+      font-weight: 800;
+      color: #01411C;
+      font-size: 0.92rem;
+    }
+
+    .chip-divider {
+      color: #94a3b8;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .chip-fare-val {
+      font-weight: 800;
+      color: #0B5345;
+      font-size: 0.95rem;
+    }
+
+    .quota-badges-container {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .quota-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.28rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .quota-pill-label {
+      font-weight: 700;
+    }
+
+    .quota-pill-val {
+      font-weight: 800;
+    }
+
+    /* Quota Pill Color Themes */
+    .quota-general.quota-avail {
+      background: #dcfce7;
+      color: #166534;
+      border-color: #86efac;
+    }
+
+    .quota-general.quota-wl {
+      background: #fee2e2;
+      color: #991b1b;
+      border-color: #fecaca;
+    }
+
+    .quota-wl-badge {
+      background: #fef2f2;
+      color: #b91c1c;
+      border-color: #fca5a5;
+    }
+
+    .quota-ladies.quota-avail {
+      background: #fdf2f8;
+      color: #9d174d;
+      border-color: #fbcfe8;
+    }
+
+    .quota-ladies.quota-zero {
+      background: #f8fafc;
+      color: #94a3b8;
+      border-color: #e2e8f0;
+    }
+
+    .quota-disability.quota-avail {
+      background: #eff6ff;
+      color: #1e40af;
+      border-color: #bfdbfe;
+    }
+
+    .quota-disability.quota-zero {
+      background: #f8fafc;
+      color: #94a3b8;
+      border-color: #e2e8f0;
+    }
+
+    .quota-tatkal.quota-avail {
+      background: #fef3c7;
+      color: #92400e;
+      border-color: #fde68a;
+    }
+
+    .quota-tatkal.quota-zero {
+      background: #f8fafc;
+      color: #94a3b8;
+      border-color: #e2e8f0;
+    }
+
+    /* COMPACT TATKAL INFO STRIP */
+    .tatkal-compact-strip {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #fffdf5;
+      border: 1px solid #fef08a;
+      border-left: 3px solid #eab308;
+      border-radius: 5px;
+      padding: 0.3rem 0.65rem;
+      font-size: 0.8rem;
+      color: #854d0e;
+      line-height: 1.35;
+    }
+
+    .tatkal-compact-strip.tatkal-strip-open {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      border-left: 3px solid #16a34a;
+      color: #166534;
+    }
+
+    .tatkal-strip-icon {
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .tatkal-strip-text {
+      font-size: 0.8rem;
+    }
+
+    .tatkal-strip-text strong {
+      font-weight: 700;
+    }
+
+    /* CARD ACTIONS */
+    .card-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-color, #e2e8f0);
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .amenities {
+      display: flex;
+      gap: 0.85rem;
+      font-size: 0.78rem;
+      color: var(--text-muted, #64748b);
+      font-weight: 500;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.65rem;
+    }
+
+    /* CONNECTING CARD */
+    .connecting-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      color: var(--text-muted, #64748b);
+    }
+
+    .legs-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .leg-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+    }
+
+    .leg-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: #e2e8f0;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .leg-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .leg-times {
+      font-size: 0.8rem;
+      color: var(--text-muted, #64748b);
+    }
+
+    .leg-fare {
+      font-weight: 700;
+      color: var(--primary-navy, #0f2744);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 0.4rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* TRAIN NAME SEARCH BAR */
+    .train-name-search-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      background: #ffffff;
+      padding: 0.85rem 1.25rem;
+      border-radius: 12px;
+      margin-top: 1rem;
+      margin-bottom: 1.5rem;
+      border: 1.5px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .search-input-wrap {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      gap: 0.75rem;
+      position: relative;
+    }
+
+    .search-input-wrap .search-icon {
+      font-size: 1.1rem;
+      color: #64748b;
+    }
+
+    .train-search-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #0f172a;
+      background: transparent;
+    }
+
+    .train-search-input::placeholder {
+      color: #94a3b8;
+    }
+
+    .clear-btn {
+      background: #f1f5f9;
+      border: none;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .clear-btn:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .results-badge {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #01411C;
+      background: #ecfdf5;
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      border: 1px solid #a7f3d0;
+      white-space: nowrap;
+    }
+
+    /* CONNECTING TRAIN STYLES */
+    .badge-departed-rollover {
+      background: #fef3c7 !important;
+      color: #92400e !important;
+      border: 1px solid #fcd34d !important;
+      font-size: 0.75rem !important;
+      font-weight: 700 !important;
+      padding: 0.25rem 0.65rem !important;
+      border-radius: 9999px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 0.3rem !important;
+    }
+
+    .connecting-card {
+      border: 1.5px solid #d8b4fe !important;
+      background: linear-gradient(180deg, #ffffff 0%, #faf5ff 100%) !important;
+      box-shadow: 0 4px 14px rgba(107, 33, 168, 0.08) !important;
+    }
+
+    .connecting-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f3e8ff;
+      border: 1px solid #e9d5ff;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .banner-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .transfer-info {
+      font-size: 0.9rem;
+      color: #581c87;
+    }
+
+    .total-duration-badge {
+      font-size: 0.88rem;
+      color: #6b21a8;
+      background: #ffffff;
+      padding: 0.3rem 0.75rem;
+      border-radius: 9999px;
+      border: 1px solid #d8b4fe;
+    }
+
+    .connecting-classes-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      background: #ffffff;
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      flex-wrap: wrap;
+    }
+
+    .classes-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .class-chips-list {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .conn-class-chip {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.4rem 0.85rem;
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 68px;
+    }
+
+    .conn-class-chip:hover {
+      border-color: #01411C;
+      background: #f0fdf4;
+    }
+
+    .conn-class-chip.selected {
+      background: #01411C;
+      border-color: #01411C;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(1, 65, 28, 0.25);
+    }
+
+    .conn-chip-class {
+      font-weight: 800;
+      font-size: 0.88rem;
+    }
+
+    .conn-class-chip.selected .conn-chip-class {
+      color: #ffffff;
+    }
+
+    .conn-chip-fare {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .conn-class-chip.selected .conn-chip-fare {
+      color: #fef08a;
+    }
+
+    .connecting-journey-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .flow-leg-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .leg-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.85rem;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 0.5rem;
+    }
+
+    .leg-badge {
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .leg-badge.leg-1 {
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+
+    .leg-badge.leg-2 {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .leg-train-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .leg-type-pill {
+      font-size: 0.72rem;
+      padding: 0.15rem 0.45rem;
+      background: #f1f5f9;
+      color: #64748b;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .leg-fare-tag {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #01411C;
+    }
+
+    .leg-timeline {
+      display: grid;
+      grid-template-columns: 100px 1fr 100px;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .leg-time-point .lt-time {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .leg-time-point .lt-stn {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #01411C;
+    }
+
+    .leg-time-point .lt-date {
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+
+    .leg-time-point.right {
+      text-align: right;
+    }
+
+    .leg-dist-track {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .leg-duration-text {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .track-bar {
+      width: 100%;
+      height: 3px;
+      background: #cbd5e1;
+      border-radius: 2px;
+      position: relative;
+    }
+
+    .track-bar::before, .track-bar::after {
+      content: '';
+      position: absolute;
+      top: -3px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #01411C;
+    }
+
+    .track-bar::before { left: 0; }
+    .track-bar::after { right: 0; }
+
+    .leg-seat-status {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #059669;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #059669;
+    }
+
+    /* TRANSFER LAYOVER BOX */
+    .transfer-layover-box {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: #fffbeb;
+      border: 1.5px dashed #f59e0b;
+      border-radius: 10px;
+      padding: 0.9rem 1.25rem;
+      color: #78350f;
+    }
+
+    .layover-icon {
+      font-size: 1.6rem;
+    }
+
+    .layover-title {
+      font-size: 0.95rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .layover-details {
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .highlight-wait {
+      color: #b45309;
+      font-size: 0.95rem;
+    }
+
+    .guaranteed-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+    }
+
+    .connecting-bottom-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 1rem;
+      border-top: 1px solid #e9d5ff;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .fare-calculation-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .breakdown-text {
+      font-size: 0.82rem;
+      color: #64748b;
+    }
+
+    .leg-availability-wrapper {
+      margin-top: 0.85rem;
+      padding-top: 0.75rem;
+      border-top: 1px dashed #e2e8f0;
+    }
+
+    .leg-action-bar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 0.85rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #f1f5f9;
+      flex-wrap: wrap;
+    }
+
+    .lt-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-bottom: 0.15rem;
+    }
+
+    .separate-booking-notice {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+    }
+
+    /* TATKAL STYLES */
+    .tatkal-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: #fffbeb;
+      border: 1.5px solid #fde68a;
+      border-left: 4px solid #d97706;
+      border-radius: 8px;
+      padding: 0.85rem 1.25rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      color: #92400e;
+      box-shadow: 0 2px 6px rgba(217, 119, 6, 0.08);
+    }
+
+    .tatkal-banner .tatkal-icon {
+      font-size: 1.35rem;
+    }
+
+    .tatkal-banner .tatkal-active {
+      color: #15803d;
+      font-weight: 700;
+    }
+
+    .tatkal-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #b45309;
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .tatkal-tag.open {
+      color: #15803d;
+      background: #dcfce7;
+      border-color: #bbf7d0;
+    }
+
+
+

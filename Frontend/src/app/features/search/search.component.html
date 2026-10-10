@@ -1,0 +1,554 @@
+<div class="search-page">
+  <!-- Search Modification Strip -->
+  <section class="search-strip">
+    <div class="container">
+      <div class="strip-grid">
+        <div class="strip-field">
+          <label>{{ 'search.fromStation' | translate }}</label>
+          <select [(ngModel)]="source" class="strip-select">
+            <option *ngFor="let s of stations" [value]="s.stationCode">
+              {{ s.stationName }} ({{ s.stationCode }})
+            </option>
+          </select>
+        </div>
+
+        <div class="strip-field">
+          <label>{{ 'search.toStation' | translate }}</label>
+          <select [(ngModel)]="destination" class="strip-select">
+            <option *ngFor="let s of stations" [value]="s.stationCode">
+              {{ s.stationName }} ({{ s.stationCode }})
+            </option>
+          </select>
+        </div>
+
+        <div class="strip-field">
+          <label>{{ 'search.journeyDate' | translate }}</label>
+          <input type="date" [(ngModel)]="journeyDate" [min]="minDate" class="strip-input" />
+        </div>
+
+        <div class="strip-field">
+          <label>{{ 'search.classLabel' | translate }}</label>
+          <select [(ngModel)]="classType" class="strip-select">
+            <option value="ALL">{{ 'search.allClasses' | translate }}</option>
+            <option value="1A">{{ 'search.acFirst' | translate }}</option>
+            <option value="2A">{{ 'search.ac2Tier' | translate }}</option>
+            <option value="3A">{{ 'search.ac3Tier' | translate }}</option>
+            <option value="SL">{{ 'search.sleeper' | translate }}</option>
+            <option value="CC">{{ 'search.chairCar' | translate }}</option>
+            <option value="2S">{{ 'search.secondSitting' | translate }}</option>
+          </select>
+        </div>
+
+        <div class="strip-field">
+          <label>{{ 'search.quotaLabel' | translate }}</label>
+          <select [(ngModel)]="quota" class="strip-select">
+            <option value="GENERAL">{{ 'home.generalQuota' | translate }}</option>
+            <option value="TATKAL">{{ 'home.tatkalQuota' | translate }}</option>
+            <option value="LADIES">{{ 'home.ladiesQuota' | translate }}</option>
+            <option value="DISABILITY">{{ 'home.disabilityQuota' | translate }}</option>
+            <option value="SENIOR_CITIZEN">{{ 'home.seniorQuota' | translate }}</option>
+          </select>
+        </div>
+
+        <div class="strip-action">
+          <button class="btn btn-primary btn-sm" (click)="executeSearch()" [disabled]="loading">
+            <span *ngIf="loading" class="spinner"></span>
+            {{ loading ? ('common.loading' | translate) : ('common.search' | translate) }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Results Container -->
+  <div class="container results-container">
+    <!-- Results Header & Filters -->
+    <div class="results-header">
+      <div>
+        <h2>{{ 'search.title' | translate }}: {{ source }} ➔ {{ destination }}</h2>
+        <p class="search-meta">
+          {{ 'search.journeyDate' | translate }}: <strong>{{ journeyDate }}</strong> | {{ 'search.quotaLabel' | translate }}: <strong>{{ quota }}</strong>
+          <span *ngIf="results.length > 0"> ({{ results.length }} {{ 'search.trainType' | translate }})</span>
+        </p>
+      </div>
+
+      <!-- Quick Sort / Filter Tabs -->
+      <div class="filter-tabs" *ngIf="results.length > 0">
+        <button
+          class="tab-btn"
+          [class.active]="activeTab === 'ALL'"
+          (click)="activeTab = 'ALL'"
+        >
+          {{ 'common.all' | translate }} ({{ results.length }})
+        </button>
+        <button
+          class="tab-btn"
+          [class.active]="activeTab === 'DIRECT'"
+          (click)="activeTab = 'DIRECT'"
+        >
+          {{ 'search.directTrains' | translate }} ({{ directCount }})
+        </button>
+        <button
+          class="tab-btn"
+          [class.active]="activeTab === 'CONNECTING'"
+          (click)="activeTab = 'CONNECTING'"
+        >
+          {{ 'search.connectingTrains' | translate }} ({{ connectingCount }})
+        </button>
+      </div>
+    </div>
+
+    <!-- Train Name Search Bar -->
+    <div class="train-name-search-bar" *ngIf="results.length > 0">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          [(ngModel)]="trainNameFilter"
+          [placeholder]="'search.searchTrainPlaceholder' | translate"
+          class="train-search-input"
+        />
+        <button *ngIf="trainNameFilter" class="clear-btn" (click)="trainNameFilter = ''" title="Clear search">✕</button>
+      </div>
+      <span class="results-badge" *ngIf="trainNameFilter">
+        {{ 'search.showing' | translate }} {{ filteredResults.length }} {{ 'search.of' | translate }} {{ results.length }} {{ 'search.trains' | translate }}
+      </span>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <div class="big-spinner"></div>
+      <p>{{ 'common.loadingData' | translate }}</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && filteredResults.length === 0" class="empty-state">
+      <div class="empty-icon">🚆</div>
+      <h3>{{ 'search.noTrainsFound' | translate }}</h3>
+      <p>{{ 'search.noTrainsHint' | translate }}</p>
+      <button class="btn btn-secondary" (click)="resetDate()">{{ 'search.checkTomorrowSchedule' | translate }}</button>
+    </div>
+
+    <!-- Tatkal Dynamic Opening Banner -->
+    <div *ngIf="quota === 'TATKAL'" class="tatkal-banner">
+      <span class="tatkal-icon">⚡</span>
+      <div class="tatkal-banner-text">
+        <span *ngIf="!isTatkalOpen(journeyDate)">
+          <strong>Tatkal Booking Notice:</strong> Tatkal booking for this journey date opens on <strong>{{ getTatkalOpeningDate(journeyDate) }}</strong> (1 day before departure at 10:00 AM).
+        </span>
+        <span *ngIf="isTatkalOpen(journeyDate)" class="tatkal-active">
+          <strong>Tatkal Booking is OPEN:</strong> Direct Tatkal quota bookings are now active for <strong>{{ journeyDate }}</strong>.
+        </span>
+      </div>
+    </div>
+
+    <!-- Train Cards List -->
+    <div *ngIf="!loading && filteredResults.length > 0" class="trains-list">
+      <div
+        *ngFor="let train of filteredResults"
+        class="train-card"
+        [class.connecting-card]="train.type === 'CONNECTING'"
+      >
+        <!-- Direct Train View -->
+        <ng-container *ngIf="train.type !== 'CONNECTING'; else connectingTpl">
+          <div class="train-top">
+            <div class="train-identity">
+              <span class="train-num">{{ train.trainNumber }}</span>
+              <h3 class="train-name">{{ train.trainName }}</h3>
+              <span class="badge badge-confirmed">{{ train.trainType || 'EXPRESS' }}</span>
+              <span *ngIf="train.departed" class="badge badge-departed-rollover">
+                ⚠️ Departed Today ➔ Booking for Tomorrow ({{ formatDisplayDate(train.journeyDate || journeyDate) }})
+              </span>
+            </div>
+            <div class="train-run-days">
+              <span class="run-tag">{{ train.runningDays || 'Runs Daily' }}</span>
+            </div>
+          </div>
+
+          <!-- Journey Schedule Timeline -->
+          <div class="journey-timeline">
+            <div class="time-block origin">
+              <div class="time-station-row">
+                <span class="st-code">{{ train.source }}</span>
+                <span class="time">{{ train.departure || '06:00' }}</span>
+              </div>
+              <div class="st-date">{{ formatDisplayDate(train.journeyDate || journeyDate) }}</div>
+            </div>
+
+            <div class="duration-block">
+              <div class="route-line">
+                <span class="dot origin"></span>
+                <span class="line"></span>
+                <span class="arrow-indicator">➔</span>
+                <span class="dot dest"></span>
+              </div>
+              <div class="distance-duration-row">
+                <span class="distance-label">{{ train.distanceKm }} km</span>
+                <span class="dot-separator">•</span>
+                <span class="duration-label">{{ train.duration || '2h 30m' }}</span>
+              </div>
+            </div>
+
+            <div class="time-block dest right">
+              <div class="time-station-row right">
+                <span class="time">{{ train.arrival || '08:30' }}</span>
+                <span class="st-code">{{ train.destination }}</span>
+              </div>
+              <div class="st-date">{{ getArrivalDisplayDate(train) }}</div>
+            </div>
+          </div>
+
+          <!-- Structured Compact Quota Availability & Tatkal Strip -->
+          <div class="card-availability-wrapper">
+            <!-- Top Availability Row: Class/Fare Chip & Quota Badges -->
+            <div class="availability-primary-row">
+              <div
+                class="class-fare-chip"
+                [class.selected]="selectedTrainId === train.trainId && selectedClassType === (train.classType || 'SL')"
+                (click)="selectClass(train, train.classType || 'SL')"
+                title="Selected Class and Fare"
+              >
+                <span class="chip-class-name">{{ train.classType || 'ALL' }}</span>
+                <span class="chip-divider">—</span>
+                <span class="chip-fare-val">{{ train.fare | pkr }}</span>
+              </div>
+
+              <div class="quota-badges-container">
+                <!-- General Quota Badge -->
+                <div class="quota-pill quota-general" [ngClass]="getGeneralSeats(train) > 0 ? 'quota-avail' : 'quota-wl'">
+                  <span class="quota-pill-label">General:</span>
+                  <span class="quota-pill-val">
+                    <strong>{{ getGeneralSeats(train) }}</strong> {{ getGeneralSeats(train) === 1 ? 'seat' : 'seats' }}
+                  </span>
+                </div>
+
+                <!-- GNWL Badge (shown only when General is 0 and not completely unavailable) -->
+                <div *ngIf="getGeneralSeats(train) <= 0 && train.status !== 'NOT_AVAILABLE'" class="quota-pill quota-wl-badge">
+                  <span class="quota-pill-val">
+                    <strong>{{ getWlBadgeText(train) }}</strong>
+                  </span>
+                </div>
+
+                <!-- Ladies Quota Badge -->
+                <div *ngIf="isLadiesConfigured(train)" class="quota-pill quota-ladies" [ngClass]="getLadiesSeats(train) > 0 ? 'quota-avail' : 'quota-zero'">
+                  <span class="quota-pill-label">Ladies:</span>
+                  <span class="quota-pill-val">
+                    <strong>{{ getLadiesSeats(train) }}</strong> {{ getLadiesSeats(train) === 1 ? 'seat' : 'seats' }}
+                  </span>
+                </div>
+
+                <!-- Disability Quota Badge -->
+                <div *ngIf="isDisabilityConfigured(train)" class="quota-pill quota-disability" [ngClass]="getDisabilitySeats(train) > 0 ? 'quota-avail' : 'quota-zero'">
+                  <span class="quota-pill-label">Disability:</span>
+                  <span class="quota-pill-val">
+                    <strong>{{ getDisabilitySeats(train) }}</strong> {{ getDisabilitySeats(train) === 1 ? 'seat' : 'seats' }}
+                  </span>
+                </div>
+
+                <!-- Tatkal Quota Badge (shown when Tatkal is open or has configured seats) -->
+                <div *ngIf="isTatkalOpen(train.journeyDate || journeyDate) || (train.tatkalAvailableSeats !== undefined)" class="quota-pill quota-tatkal" [ngClass]="(train.tatkalAvailableSeats || 0) > 0 ? 'quota-avail' : 'quota-zero'">
+                  <span class="quota-pill-label">Tatkal:</span>
+                  <span class="quota-pill-val">
+                    <strong>{{ train.tatkalAvailableSeats || 0 }}</strong> {{ (train.tatkalAvailableSeats || 0) === 1 ? 'seat' : 'seats' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Single-Line Compact Tatkal Info Strip -->
+            <div class="tatkal-compact-strip" [class.tatkal-strip-open]="isTatkalOpen(train.journeyDate || journeyDate)">
+              <span class="tatkal-strip-icon">⚡</span>
+              <span *ngIf="!isTatkalOpen(train.journeyDate || journeyDate)" class="tatkal-strip-text">
+                Tatkal booking opens <strong>{{ train.tatkalOpeningTime || getTatkalOpeningTimeFull(train.journeyDate || journeyDate) }}</strong>
+              </span>
+              <span *ngIf="isTatkalOpen(train.journeyDate || journeyDate)" class="tatkal-strip-text tatkal-open-text">
+                Tatkal booking is <strong>OPEN</strong> for this journey
+              </span>
+            </div>
+          </div>
+
+          <!-- Actions Bottom -->
+          <div class="card-actions">
+            <div class="amenities">
+              <span>🍱 {{ 'search.eCatering' | translate }}</span>
+              <span>⚡ {{ 'search.chargingPoints' | translate }}</span>
+              <span>🛡️ {{ 'search.verifiedReservation' | translate }}</span>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary btn-sm" (click)="proceedToBook(train)">
+                {{ 'home.bookNow' | translate }}
+              </button>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Connecting Train Multi-Leg View -->
+        <ng-template #connectingTpl>
+          <div class="connecting-banner">
+            <div class="banner-left">
+              <span class="badge badge-connecting">{{ 'search.connectingJourney' | translate }}</span>
+              <span *ngIf="train.departed" class="badge badge-departed-rollover">
+                ⚠️ {{ 'search.departedTomorrow' | translate }} ({{ formatDisplayDate(train.journeyDate || journeyDate) }})
+              </span>
+              <span class="transfer-info">
+                {{ 'search.transferVia' | translate }} <strong>{{ train.connection?.transferStationName || train.connection?.station }} ({{ train.connection?.transferStationCode || train.connection?.station }})</strong>
+              </span>
+            </div>
+            <div class="banner-right">
+              <span class="total-duration-badge">{{ 'search.totalTravel' | translate }}: <strong>{{ train.duration }}</strong></span>
+            </div>
+          </div>
+
+
+          <!-- Separate Booking Notice -->
+          <div class="separate-booking-notice">
+            <span>ℹ️ {{ 'search.separateBookingNote' | translate }}</span>
+          </div>
+
+          <!-- Multi-Leg Journey Details -->
+          <div class="connecting-journey-flow" *ngIf="train.legs && train.legs.length >= 2 && train.legs[0] && train.legs[1]">
+            <!-- Leg 1 -->
+            <div class="flow-leg-card">
+              <div class="leg-header">
+                <span class="leg-badge leg-1">{{ 'search.leg1' | translate }}</span>
+                <div class="leg-train-info">
+                  <strong>{{ train.legs[0].trainNumber }} - {{ train.legs[0].trainName }}</strong>
+                  <span class="leg-type-pill">{{ train.legs[0].trainType }}</span>
+                </div>
+                <div class="leg-fare-tag">{{ getLegFare(train, 0) | pkr }}</div>
+              </div>
+              <div class="leg-timeline">
+                <div class="leg-time-point">
+                  <div class="lt-label">{{ 'search.startTime' | translate }}</div>
+                  <div class="lt-time">{{ train.legs[0].departureTime }}</div>
+                  <div class="lt-stn">{{ train.legs[0].source }}</div>
+                  <div class="lt-date">{{ formatDisplayDate(train.legs[0].departureDate || train.journeyDate || journeyDate) }}</div>
+                </div>
+                <div class="leg-dist-track">
+                  <span class="leg-duration-text">{{ train.legs[0].duration }} ({{ train.legs[0].distanceKm }} km)</span>
+                  <div class="track-bar"></div>
+                </div>
+                <div class="leg-time-point right">
+                  <div class="lt-label">{{ 'search.endTime' | translate }}</div>
+                  <div class="lt-time">{{ train.legs[0].arrivalTime }}</div>
+                  <div class="lt-stn">{{ train.legs[0].destination }}</div>
+                  <div class="lt-date">{{ formatDisplayDate(train.legs[0].arrivalDate || train.journeyDate || journeyDate) }}</div>
+                </div>
+              </div>
+
+              <!-- Quota Availability & Tatkal Strip for Leg 1 -->
+              <div class="card-availability-wrapper leg-availability-wrapper">
+                <div class="availability-primary-row">
+                  <div class="class-fare-chip selected" title="Selected Class and Fare">
+                    <span class="chip-class-name">{{ train.legs[0].classType || train.classType || 'SL' }}</span>
+                    <span class="chip-divider">—</span>
+                    <span class="chip-fare-val">{{ getLegFare(train, 0) | pkr }}</span>
+                  </div>
+
+                  <div class="quota-badges-container">
+                    <!-- General Quota Badge -->
+                    <div class="quota-pill quota-general" [ngClass]="getGeneralSeats(train.legs[0]) > 0 ? 'quota-avail' : 'quota-wl'">
+                      <span class="quota-pill-label">General:</span>
+                      <span class="quota-pill-val">
+                        <strong>{{ getGeneralSeats(train.legs[0]) }}</strong> {{ getGeneralSeats(train.legs[0]) === 1 ? 'seat' : 'seats' }}
+                      </span>
+                    </div>
+
+                    <!-- GNWL Badge (shown only when General is 0 and not completely unavailable) -->
+                    <div *ngIf="getGeneralSeats(train.legs[0]) <= 0 && train.legs[0].status !== 'NOT_AVAILABLE'" class="quota-pill quota-wl-badge">
+                      <span class="quota-pill-val">
+                        <strong>{{ getWlBadgeText(train.legs[0]) }}</strong>
+                      </span>
+                    </div>
+
+                    <!-- Ladies Quota Badge -->
+                    <div *ngIf="isLadiesConfigured(train.legs[0])" class="quota-pill quota-ladies" [ngClass]="getLadiesSeats(train.legs[0]) > 0 ? 'quota-avail' : 'quota-zero'">
+                      <span class="quota-pill-label">Ladies:</span>
+                      <span class="quota-pill-val">
+                        <strong>{{ getLadiesSeats(train.legs[0]) }}</strong> {{ getLadiesSeats(train.legs[0]) === 1 ? 'seat' : 'seats' }}
+                      </span>
+                    </div>
+
+                    <!-- Disability Quota Badge -->
+                    <div *ngIf="isDisabilityConfigured(train.legs[0])" class="quota-pill quota-disability" [ngClass]="getDisabilitySeats(train.legs[0]) > 0 ? 'quota-avail' : 'quota-zero'">
+                      <span class="quota-pill-label">Disability:</span>
+                      <span class="quota-pill-val">
+                        <strong>{{ getDisabilitySeats(train.legs[0]) }}</strong> {{ getDisabilitySeats(train.legs[0]) === 1 ? 'seat' : 'seats' }}
+                      </span>
+                    </div>
+
+                    <!-- Tatkal Quota Badge -->
+                    <div *ngIf="isTatkalOpen(train.legs[0].departureDate || train.journeyDate || journeyDate) || (train.legs[0].tatkalAvailableSeats !== undefined)" class="quota-pill quota-tatkal" [ngClass]="(train.legs[0].tatkalAvailableSeats || 0) > 0 ? 'quota-avail' : 'quota-zero'">
+                      <span class="quota-pill-label">Tatkal:</span>
+                      <span class="quota-pill-val">
+                        <strong>{{ train.legs[0].tatkalAvailableSeats || 0 }}</strong> {{ (train.legs[0].tatkalAvailableSeats || 0) === 1 ? 'seat' : 'seats' }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tatkal Info Strip for Leg 1 -->
+                <div class="tatkal-compact-strip" [class.tatkal-strip-open]="isTatkalOpen(train.legs[0].departureDate || train.journeyDate || journeyDate)">
+                  <span class="tatkal-strip-icon">⚡</span>
+                  <span *ngIf="!isTatkalOpen(train.legs[0].departureDate || train.journeyDate || journeyDate)" class="tatkal-strip-text">
+                    Tatkal booking opens <strong>{{ train.legs[0].tatkalOpeningTime || getTatkalOpeningTimeFull(train.legs[0].departureDate || train.journeyDate || journeyDate) }}</strong>
+                  </span>
+                  <span *ngIf="isTatkalOpen(train.legs[0].departureDate || train.journeyDate || journeyDate)" class="tatkal-strip-text tatkal-open-text">
+                    Tatkal booking is <strong>OPEN</strong> for this journey
+                  </span>
+                </div>
+              </div>
+
+              <div class="leg-action-bar">
+                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="viewConnectingLegSeats(train, 0)">
+                  🪑 {{ 'search.selectSeats' | translate }} ({{ train.legs[0].trainNumber }})
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  (click)="bookConnectingLeg(train, 0)"
+                  [disabled]="!isLegBookable(train, 0)"
+                >
+                  {{ getLegBookBtnText(train, 0) }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Transfer / Layover Box -->
+            <div class="transfer-layover-box">
+              <div class="layover-icon">⏳</div>
+              <div class="layover-content">
+                <div class="layover-title">
+                  <strong>{{ 'search.transferLayover' | translate }} {{ train.connection?.transferStationName || train.connection?.station }} ({{ train.connection?.transferStationCode || train.connection?.station }})</strong>
+                </div>
+                <div class="layover-details">
+                  {{ 'search.transferArrival' | translate }}: <strong>{{ train.legs[0].arrivalTime }}</strong>
+                  ➔
+                  {{ 'search.transferDeparture' | translate }}: <strong>{{ train.legs[1].departureTime }}</strong>
+                  | {{ 'search.waitingTime' | translate }}: <strong class="highlight-wait">{{ train.connection?.waitingTimeFormatted || train.connection?.waitingTime }}</strong>
+                  <span class="guaranteed-tag">✓ {{ 'search.positiveTransfer' | translate }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Leg 2 -->
+            <div class="flow-leg-card">
+              <div class="leg-header">
+                <span class="leg-badge leg-2">{{ 'search.leg2' | translate }}</span>
+                <div class="leg-train-info">
+                  <strong>{{ train.legs[1].trainNumber }} - {{ train.legs[1].trainName }}</strong>
+                  <span class="leg-type-pill">{{ train.legs[1].trainType }}</span>
+                </div>
+                <div class="leg-fare-tag">{{ getLegFare(train, 1) | pkr }}</div>
+              </div>
+              <div class="leg-timeline">
+                <div class="leg-time-point">
+                  <div class="lt-label">{{ 'search.startTime' | translate }}</div>
+                  <div class="lt-time">{{ train.legs[1].departureTime }}</div>
+                  <div class="lt-stn">{{ train.legs[1].source }}</div>
+                  <div class="lt-date">{{ formatDisplayDate(train.legs[1].departureDate || train.journeyDate || journeyDate) }}</div>
+                </div>
+                <div class="leg-dist-track">
+                  <span class="leg-duration-text">{{ train.legs[1].duration }} ({{ train.legs[1].distanceKm }} km)</span>
+                  <div class="track-bar"></div>
+                </div>
+                <div class="leg-time-point right">
+                  <div class="lt-label">{{ 'search.endTime' | translate }}</div>
+                  <div class="lt-time">{{ train.legs[1].arrivalTime }}</div>
+                  <div class="lt-stn">{{ train.legs[1].destination }}</div>
+                  <div class="lt-date">{{ formatDisplayDate(train.legs[1].arrivalDate || train.journeyDate || journeyDate) }}</div>
+                </div>
+              </div>
+
+              <!-- Quota Availability & Tatkal Strip for Leg 2 -->
+              <div class="card-availability-wrapper leg-availability-wrapper">
+                <div class="availability-primary-row">
+                  <div class="class-fare-chip selected" title="Selected Class and Fare">
+                    <span class="chip-class-name">{{ train.legs[1].classType || train.classType || 'SL' }}</span>
+                    <span class="chip-divider">—</span>
+                    <span class="chip-fare-val">{{ getLegFare(train, 1) | pkr }}</span>
+                  </div>
+
+                  <div class="quota-badges-container">
+                    <!-- General Quota Badge -->
+                    <div class="quota-pill quota-general" [ngClass]="getGeneralSeats(train.legs[1]) > 0 ? 'quota-avail' : 'quota-wl'">
+                      <span class="quota-pill-label">General:</span>
+                      <span class="quota-pill-val">
+                        <strong>{{ getGeneralSeats(train.legs[1]) }}</strong> {{ getGeneralSeats(train.legs[1]) === 1 ? 'seat' : 'seats' }}
+                      </span>
+                    </div>
+
+                    <!-- GNWL Badge (shown only when General is 0 and not completely unavailable) -->
+                    <div *ngIf="getGeneralSeats(train.legs[1]) <= 0 && train.legs[1].status !== 'NOT_AVAILABLE'" class="quota-pill quota-wl-badge">
+                      <span class="quota-pill-val">
+                        <strong>{{ getWlBadgeText(train.legs[1]) }}</strong>
+                      </span>
+                    </div>
+
+                    <!-- Ladies Quota Badge -->
+                    <div *ngIf="isLadiesConfigured(train.legs[1])" class="quota-pill quota-ladies" [ngClass]="getLadiesSeats(train.legs[1]) > 0 ? 'quota-avail' : 'quota-zero'">
+                      <span class="quota-pill-label">Ladies:</span>
+                      <span class="quota-pill-val">
+                        <strong>{{ getLadiesSeats(train.legs[1]) }}</strong> {{ getLadiesSeats(train.legs[1]) === 1 ? 'seat' : 'seats' }}
+                      </span>
+                    </div>
+
+                    <!-- Disability Quota Badge -->
+                    <div *ngIf="isDisabilityConfigured(train.legs[1])" class="quota-pill quota-disability" [ngClass]="getDisabilitySeats(train.legs[1]) > 0 ? 'quota-avail' : 'quota-zero'">
+                      <span class="quota-pill-label">Disability:</span>
+                      <span class="quota-pill-val">
+                        <strong>{{ getDisabilitySeats(train.legs[1]) }}</strong> {{ getDisabilitySeats(train.legs[1]) === 1 ? 'seat' : 'seats' }}
+                      </span>
+                    </div>
+
+                    <!-- Tatkal Quota Badge -->
+                    <div *ngIf="isTatkalOpen(train.legs[1].departureDate || train.journeyDate || journeyDate) || (train.legs[1].tatkalAvailableSeats !== undefined)" class="quota-pill quota-tatkal" [ngClass]="(train.legs[1].tatkalAvailableSeats || 0) > 0 ? 'quota-avail' : 'quota-zero'">
+                      <span class="quota-pill-label">Tatkal:</span>
+                      <span class="quota-pill-val">
+                        <strong>{{ train.legs[1].tatkalAvailableSeats || 0 }}</strong> {{ (train.legs[1].tatkalAvailableSeats || 0) === 1 ? 'seat' : 'seats' }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tatkal Info Strip for Leg 2 -->
+                <div class="tatkal-compact-strip" [class.tatkal-strip-open]="isTatkalOpen(train.legs[1].departureDate || train.journeyDate || journeyDate)">
+                  <span class="tatkal-strip-icon">⚡</span>
+                  <span *ngIf="!isTatkalOpen(train.legs[1].departureDate || train.journeyDate || journeyDate)" class="tatkal-strip-text">
+                    Tatkal booking opens <strong>{{ train.legs[1].tatkalOpeningTime || getTatkalOpeningTimeFull(train.legs[1].departureDate || train.journeyDate || journeyDate) }}</strong>
+                  </span>
+                  <span *ngIf="isTatkalOpen(train.legs[1].departureDate || train.journeyDate || journeyDate)" class="tatkal-strip-text tatkal-open-text">
+                    Tatkal booking is <strong>OPEN</strong> for this journey
+                  </span>
+                </div>
+              </div>
+
+              <div class="leg-action-bar">
+                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="viewConnectingLegSeats(train, 1)">
+                  🪑 {{ 'search.selectSeats' | translate }} ({{ train.legs[1].trainNumber }})
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  (click)="bookConnectingLeg(train, 1)"
+                  [disabled]="!isLegBookable(train, 1)"
+                >
+                  {{ getLegBookBtnText(train, 1) }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Summary -->
+          <div class="card-actions connecting-bottom-actions">
+            <div class="fare-calculation-summary">
+              <span class="breakdown-text">
+                {{ 'search.leg1' | translate }}: <strong>{{ getLegFare(train, 0) | pkr }}</strong> + {{ 'search.leg2' | translate }}: <strong>{{ getLegFare(train, 1) | pkr }}</strong> ({{ 'search.travelClassBoth' | translate }} <strong>{{ train.classType || 'SL' }}</strong>)
+              </span>
+            </div>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</div>
