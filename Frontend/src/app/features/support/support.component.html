@@ -1,0 +1,162 @@
+<div class="support-page">
+  <div class="container">
+    <!-- Header -->
+    <div class="support-header">
+      <h2>{{ 'support.title' | translate }}</h2>
+      <p>{{ 'support.subtitle' | translate }}</p>
+    </div>
+
+    <!-- Quick Contacts Bar -->
+    <div class="contacts-bar">
+      <div class="contact-pill">
+        <span class="icon">📞</span>
+        <div>
+          <strong>{{ 'footer.helpline' | translate }}</strong>
+          <small>{{ 'support.officialAssistance' | translate }}</small>
+        </div>
+      </div>
+      <div class="contact-pill">
+        <span class="icon">✉️</span>
+        <div>
+          <strong>complaints&#64;pakrail.gov.pk</strong>
+          <small>{{ 'support.guaranteedReply' | translate }}</small>
+        </div>
+      </div>
+      <div class="contact-pill">
+        <span class="icon">⚡</span>
+        <div>
+          <strong>{{ 'support.categoryRefund' | translate }}</strong>
+          <small>{{ 'booking.graduatedRefundRule' | translate }}</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="support-layout">
+      <!-- Left: Submit Inquiry Form -->
+      <div class="support-form-card">
+        <div class="card-title-bar">
+          <h3>{{ 'support.submitTitle' | translate }}</h3>
+          <span class="badge badge-info">{{ 'support.officialAssistance' | translate }}</span>
+        </div>
+
+        <form [formGroup]="queryForm" (ngSubmit)="onSubmitQuery()">
+          <div class="form-group">
+            <label class="form-label">{{ 'support.category' | translate }}</label>
+            <select formControlName="category" class="form-control">
+              <option value="BOOKING">{{ 'support.categoryBooking' | translate }}</option>
+              <option value="REFUND">{{ 'support.categoryRefund' | translate }}</option>
+              <option value="TRAIN_DELAY">{{ 'support.categoryDelay' | translate }}</option>
+              <option value="CATERING">{{ 'support.categoryPantry' | translate }}</option>
+              <option value="TECHNICAL">{{ 'support.categoryTechnical' | translate }}</option>
+              <option value="GENERAL">{{ 'support.categoryGeneral' | translate }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{{ 'support.subject' | translate }}</label>
+            <input
+              type="text"
+              formControlName="subject"
+              class="form-control"
+              [placeholder]="'support.subjectPlaceholder' | translate"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{{ 'support.pnrOptional' | translate }}</label>
+            <input
+              type="text"
+              formControlName="pnr"
+              class="form-control"
+              [placeholder]="'support.pnrPlaceholder' | translate"
+              maxlength="10"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{{ 'support.description' | translate }}</label>
+            <textarea
+              formControlName="description"
+              rows="4"
+              class="form-control"
+              [placeholder]="'support.descPlaceholder' | translate"
+            ></textarea>
+          </div>
+
+          <button
+            type="submit"
+            class="btn btn-primary btn-block"
+            [disabled]="queryForm.invalid || submitting"
+          >
+            <span *ngIf="submitting" class="spinner"></span>
+            {{ submitting ? ('support.submitting' | translate) : ('support.submitBtn' | translate) }}
+          </button>
+        </form>
+      </div>
+
+      <!-- Right: My Previous Queries & FAQ -->
+      <div class="queries-sidebar">
+        <div class="queries-card">
+          <div class="card-title-bar">
+            <h3>{{ 'support.myQueries' | translate }}</h3>
+            <span class="count-tag">{{ queries.length }}</span>
+          </div>
+
+          <div *ngIf="loading" class="loading-hint">{{ 'common.loadingData' | translate }}</div>
+
+          <div *ngIf="!loading && queries.length === 0" class="empty-tickets">
+            {{ 'support.noQueries' | translate }}
+          </div>
+
+          <div *ngIf="!loading && queries.length > 0" class="tickets-list">
+            <div *ngFor="let q of queries" class="ticket-item">
+              <div class="ticket-header">
+                <span class="ticket-cat badge badge-secondary">{{ q.category }}</span>
+                <span
+                  class="ticket-status"
+                  [class.open]="q.status === 'OPEN'"
+                  [class.resolved]="q.status === 'RESOLVED'"
+                >
+                  {{ q.status }}
+                </span>
+              </div>
+
+              <h4 class="ticket-subject">{{ q.subject }}</h4>
+              <p class="ticket-desc">{{ q.description || q.message }}</p>
+
+              <div *ngIf="q.pnr" class="ticket-pnr">
+                {{ 'pnr.pnrNumber' | translate }}: <strong>{{ q.pnr }}</strong>
+              </div>
+
+              <!-- Admin Reply Box (if replied) -->
+              <div *ngIf="q.adminReply || q.replyMessage" class="admin-reply-box">
+                <div class="reply-header">
+                  <span>{{ 'support.officialReply' | translate }}</span>
+                  <small *ngIf="q.repliedBy">By {{ q.repliedBy }}</small>
+                </div>
+                <p class="reply-msg">{{ q.adminReply || q.replyMessage }}</p>
+              </div>
+
+              <div class="ticket-date">
+                {{ q.createdAt ? (q.createdAt | date:'medium') : '' }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQs accordion -->
+        <div class="faq-card">
+          <h3>{{ 'support.faqTitle' | translate }}</h3>
+          <div class="faq-item">
+            <strong>{{ 'support.faq1Q' | translate }}</strong>
+            <p>{{ 'support.faq1A' | translate }}</p>
+          </div>
+          <div class="faq-item">
+            <strong>{{ 'support.faq2Q' | translate }}</strong>
+            <p>{{ 'support.faq2A' | translate }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
