@@ -1,0 +1,40 @@
+<div class="app-root-container">
+  <!-- Official Government Topbar & Global Sticky Language Switcher -->
+  <div class="gov-topbar">
+    <div class="gov-topbar-content">
+      <div class="gov-title-wrapper">
+        <span class="gov-flag">🇵🇰</span>
+        <span>{{ 'app.banner' | translate }}</span>
+      </div>
+      <div class="gov-lang-switch" role="group" aria-label="Language Selector">
+        <button
+          type="button"
+          class="lang-btn"
+          [class.active]="langService.currentLang() === 'en'"
+          (click)="langService.setLanguage('en')"
+          title="Switch to English"
+        >
+          English
+        </button>
+        <button
+          type="button"
+          class="lang-btn"
+          [class.active]="langService.currentLang() === 'ur'"
+          (click)="langService.setLanguage('ur')"
+          title="اردو میں تبدیل کریں"
+        >
+          اردو
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <app-navbar></app-navbar>
+
+  <main class="main-content-area">
+    <router-outlet></router-outlet>
+  </main>
+
+  <app-footer></app-footer>
+  <app-toast></app-toast>
+</div>
